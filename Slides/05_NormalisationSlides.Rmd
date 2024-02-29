@@ -1,0 +1,176 @@
+---
+title: "Introduction to single-cell RNA-seq analysis - Normalisation"
+author: "Chandra Chilamakuri and Stephane Ballereau and Adam Reid"
+date: "25/01/2023"
+output:
+  ioslides_presentation:
+    widescreen: yes
+    smaller: yes
+    logo: Images/uniOfCamCrukLogos.png
+    css: css/stylesheet.css
+  beamer_presentation: default
+---
+
+## Outline
+
+* Motivation
+* Biases
+    * Depth bias
+    * Composition bias
+    * Mean-variance correlation
+* Normalisation strategies
+* Deconvolution
+
+## Workflow
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/workflow2.png')
+```
+
+## Workflow
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/workflow2_normalisation.png')
+```
+
+## Raw UMI counts distribution
+
+```{r echo=FALSE, out.width='50%', fig.align='center'}
+knitr::include_graphics('Images/PBMMC_1_counts_before_norm.png')
+```
+
+## Why do UMI counts differ among the cells?
+
+* We derive biological insights downstream by comparing cells against each other.
+* But the UMI count differences makes it harder to compare cells.
+
+* Why do total transcript molecules (UMI counts) detected between cells differ?
+  * Biological:
+    * Cell subtype differences - size and transcriptional activity, variation in gene expression
+  * Technical: scRNA data is inherently noisy
+    * Low mRNA content per cell
+    * cell-to-cell differences in mRNA capture efficiency
+    * Variable sequencing depth
+    * PCR amplification efficiency
+
+Normalization reduces technical differences
+so that differences between cells are not technical but biological,
+allowing meaningful comparison of expression profiles between cells.
+
+## Depth bias
+
+Consider two genes A:B, in two cells types, blue and green.
+
+We normalize here by dividing UMI counts for each gene by the total UMI counts in a cell and multiplying by 100. 
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/norm_slides_depth_bias.png')
+```
+
+There is no differential expression, we have just sequenced twice as much in the second cell type.
+
+Simple library size normalization accounts for the depth bias
+
+## Composition bias
+
+Consider three genes A:B:C, in two cell types.
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/norm_slides_composition_bias.png')
+```
+
+Just one gene is DE but library size normalization makes all look differentially expressed after normalisation
+
+The deconvolution approach will we use takes account of both depth and compositions biases
+
+## Mean-variance correlation
+
+Mean and variance of raw counts for genes are correlated
+
+More highly expressed genes tend to look more variable because larger numbers result in higher variance
+
+```{r echo=FALSE, fig.align='right', out.width= "60%", out.extra='style="float:right; padding:10px"'}
+knitr::include_graphics('Images/variance_mean_uncorrected.png')
+```
+
+A gene expressed at a low level tends to have a low variance across cells:
+
+var(c(2,4,2,4,2,4,2,4)) = 1.14
+
+A gene with the same proportional differences between cells, but expressed at a higher level will have higher variance:
+
+var(c(20,40,20,40,20,40,20,40)) = 114.29
+
+## Mean-variance correlation
+
+If we take the logs of the expression values, the variances are the same for both genes:
+
+var(log(c(2,4,2,4,2,4,2,4))) = 0.14 
+
+var(log(c(20,40,20,40,20,40,20,40))) = 0.14
+
+```{r echo=FALSE, , fig.align='right', out.width= "60%", out.extra='style="float:right; padding:10px"'}
+knitr::include_graphics('Images/variance_mean_uncorrected.png')
+```
+
+This "variable stabilising transformation" helps to remove the correlation between mean and variance
+
+## General principle behind normalisation
+
+Normalization has two steps
+
+1. Scaling
+    * Calculate size factors or normalization factors that represents the relative depth bias in each cell
+    * Scale the counts for each gene in each cell by dividing the raw counts with cell specific size factor
+  
+2. Transformation: Transform the data after scaling
+    * Per million (e.g. CPM)
+    * log2 (e.g. Deconvolution)
+    * Pearson residuals (eg. sctransform)
+
+## Bulk RNAseq methods are not suitable for scRNAseq data
+
+CPM: convert raw counts to counts-per-million (CPM)
+
+* for each cell
+* by dividing counts by the library size then multiplying by 1.000.000.
+* does not address compositional bias caused by highly expressed genes that are also differentially expressed between cells.
+
+DESeq’s size factor
+
+* For each gene, compute geometric mean across cells
+* For each cell
+    * compute for each gene the ratio of its expression to its geometric mean,
+    * derive the cell’s size factor as the median ratio across genes.
+* Not suitable for sparse scRNA-seq data as the geometric mean is computed on non-zero values only.
+  
+## Bulk RNA-seq normalization methods fail for scRNA-seq data
+
+```{r echo=FALSE, out.width='90%', fig.align='left'}
+knitr::include_graphics('Images/size_factors_plot.png')
+```
+
+## Deconvolution
+
+Deconvolution strategy [Lun et al 2016](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-016-0947-7/):
+
+```{r, echo=FALSE, out.width = '100%'}
+knitr::include_graphics("../Images/scran_Fig3c2.png", auto_pdf = TRUE)
+```
+
+Steps:
+
+* compute scaling factors by pooling cells
+* apply scaling factors to get scaled data
+* log2 transform the data
+
+## Recap
+
+* We get different total counts for each cell due to technical factors (depth bias)
+* A simplistic library size normalisation (e.g. CPM) removes a large part of this bias
+* However, composition bias causes spurious differences between cells
+* Early methods developed for bulk RNA-seq are not appropriate for sparse scRNA- seq data.
+* The deconvolution method draws information from pools of cells to derive cell- based scaling factors that account for composition bias in scRNA-seq data.
+
+In the demonstration and exercises we will see the effect of deconvolution on the data.
+

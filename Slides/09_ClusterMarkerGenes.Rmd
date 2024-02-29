@@ -1,0 +1,102 @@
+---
+title: "Marker Gene Identification"
+author: "Ashley Sawle, Zeynep Kalender-Atak, Hugo Tavares"
+date: 'Jun 2022'
+output:
+  ioslides_presentation:
+    widescreen: true
+    smaller: true
+    logo: Images/uniOfCamCrukLogos.png
+    css: css/stylesheet.css
+---
+
+## Single Cell RNAseq Analysis Workflow
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/workflow2_cluMarkerGenes.png')
+```
+
+## Identifying Cluster Marker Genes
+
+```{r echo=FALSE, out.width= "50%", out.extra='style="float:left; padding:30px"'}
+knitr::include_graphics('Images/tsne_clusters.png')
+```
+
+Our goal is to identify genes that are differently expressed between clusters
+
+Calculate effect sizes that capture differences in:
+
+* mean expression level
+* rank of expression
+* proportion of cells expressing the gene
+
+These are calculated in pairwise cluster comparisons.
+
+
+## Cohen's _d_: mean difference
+
+* Log(fold change) of mean gene expression, standardized by the average standard deviation across the groups.
+* Positive value indicates upregulation in the cluster of interest, and vice-versa.
+
+
+## AUC: rank difference
+
+* "Area Under the Curve" quantifies the ability to distinguish between two gene expression distributions.
+* Measures the likelihood that a random cell in the cluster of interest has a higher expression of the gene than a random cell in the other cluster.
+* Takes no account of the magnitude of gene expression.
+* Ranges from 0 to 1, which can be interpreted as:
+    + 1 = upregulation
+    + 0 = downregulation
+    + 0.5 = no difference
+
+
+## Detection rate difference
+
+* Log(fold change) in the proportion of cells in which the gene is detected (counts > 0) in the cluster of interest versus the proportion of cells in which the gene is detected in the other cluster.
+* Takes no account of the magnitude of gene expression.
+* Positive values indicate that the gene is detected in more cells in the cluster of interest than the other cluster.
+
+
+## `scran::scoreMarkers()` function
+
+For each cluster the function computes the effect size scores between it and every
+other cluster. 
+
+```r
+scoreMarkers(
+  sce, 
+  groups = sce$louvain15      # clusters to compare
+  block = sce$SampleGroup,    # covariates in statistical model
+)
+```
+
+Outputs a list of `DataFrame` with summary statistics for the metrics we just covered (columns named with suffix `cohen`, `AUC` and `detected`).
+
+
+## `scran::scoreMarkers()`: summary statistics
+
+* **mean.X** - mean score across all pairwise comparisons.
+* **min.X** - minimum score obtained across all pairwise comparisons. Most stringent statistic: high score indicates  upregulation relative to *all* other clusters. 
+* **median.X** - median score across all pairwise comparisons. More robust to outliers than the mean. 
+* **max.X** - maximum score obtained across all pairwise comparisons. The least stringent summary statistic: a high score only indicates that the gene is upregulated relative to *at least one* other cluster.
+* **rank.X** - minimum ranking ("min-rank") of that gene's score across all clusters. A rank of 1 indicates that gene had the highest score in at least one of the pairwise comparisons.
+
+
+## So, what's really important? 
+
+* Understand what are we trying to compare with the different scores:
+    + difference in mean expression
+    + probability of being highly/lowly expressed
+    + difference in probability of being expressed)
+
+* Strictly speaking, identifying genes differentially expressed between clusters is statistically flawed, since the clusters were themselves defined based on the gene expression data itself. Validation is crucial as a follow-up from these analyses.
+
+* Do not use batch-integrated expression data for calculating marker gene scores, instead, **include batch in the statistical model** (the `scoreMarkers()` function has the `block` argument to achieve this).
+
+* Normalization strategy has a big influence on the results in differences in expression between cell and between clusters.
+
+* A lot of what you get might be noise. Take two random set of cells and run DE and you probably with have a few significant genes with most of the commonly used tests.
+
+* It’s important to assess and **validate the results**. Think of the results as
+hypotheses that need independent verification (e.g. microscopy, qPCR)
+

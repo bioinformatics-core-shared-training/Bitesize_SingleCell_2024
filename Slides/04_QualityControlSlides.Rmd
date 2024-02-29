@@ -1,0 +1,196 @@
+---
+title: Introduction to single-cell RNA-seq analysis
+subtitle: Quality Control
+date: '12th September 2022'
+output:
+  ioslides_presentation:
+    widescreen: true
+    smaller: true
+    logo: Images/uniOfCamCrukLogos.png
+    css: css/stylesheet.css
+---
+
+<style type="text/css">
+slides > slide:not(.nobackground):after {
+  content: '';
+}
+</style>
+
+## Single Cell RNAseq Analysis Workflow
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/workflow2_QC.png')
+```
+
+## 10x overview
+
+<div style="width: 75%; float: top; padding-left: 10%; padding-top: 10%">
+<img src="Images/10x_overview.jpg" class="centerimg" style="width: 95%">
+</div>
+
+<div style="width: 100%; float: bottom; padding-top: 20%">
+Image source: https://web.genewiz.com/single-cell-faq
+</div>
+
+## Not every droplet is useble
+
+```{r echo=FALSE, out.width='100%', fig.align='center', out.height='80%'}
+knitr::include_graphics('Images/droplet_overview.png')
+```
+
+## Quality Control overview
+
+<div style="width: 55%; float: left;">
+* Aim of QC is ...
+  * To remove undetected genes
+  * To remove empty droplets
+  * To remove droplets with dead cells
+  * To remove Doublet/multiplet 
+  * Ultimately To filter the data to only include true cells that are of high quality 
+
+* Above is achieved by ...
+
+  * Applying hard cut-off or adaptive cut-off on ...
+    * Number of genes detected per cell
+    * Percent of mitochondrial genes per cell
+    * Number of UMIs/transcripts detected per cell
+    
+</div>
+
+## Quality Control
+
+<div style="width: 55%; float: left;">
+
+Bioconductor R packages:
+
+* _scran_: Collection functions for interpretation of single-cell RNA-seq data
+* _scater_: For focus on quality control and visualization. 
+* _DropletUtils_: Handling single-cell (RNA-seq) data from droplet technologies such as 10X Genomics 
+
+**Orchestrating Single-Cell Analysis with Bioconductor**
+_Robert Amezquita, Aaron Lun, Stephanie Hicks, Raphael Gottardo_
+
+http://bioconductor.org/books/release/OSCA/
+    
+</div>
+
+<div style="width: 25%; float: right; padding-right: 10%; padding-top: 10%">
+<img src="Images/Bioconductor-serial.gif" class="centerimg" style="width: 95%">
+</div>
+
+## Read CellRanger outputs into R
+
+<div style="width: 80%; float: left;">
+* CellRanger outputs: gives two output folders raw and filtered 
+
+* Each folder has three zipped files 
+  * features.tsv.gz, barcodes.tsv.gz and matrix.mtx.gz
+  * raw_feature_bc_matrix 
+    * All valid barcodes from GEMs captured in the data 
+    * Contains about half a million to a million barcodes 
+    * Most barcodes do not actually contain cells 
+
+  * filtered_feature_bc_matrix 
+    * Excludes barcodes that correspond to this background 
+    * Contains valid cells according to 10x cell calling algorithm 
+    * Contains 100s to 1000s of barcodes 
+</div>
+
+<div style="width: 75%; float: top; padding-left: 10%; padding-top: 10%">
+<img src="Images/sce_object_1.png" class="centerimg" style="width: 95%">
+</div>
+
+## Single Cell Experiment Vocabulary alert
+
+* cell = Barcode = droplet
+* Transcript = UMI
+
+## The _SingleCellExperiment_ object
+
+<div style="width: 75%; float: top; padding-left: 10%">
+<img src="Images/sce_object_2.png" class="centerimg" style="width: 100%">
+</div>
+
+
+## The Counts Matrix
+
+<div style="width: 75%; float: top; padding-left: 10%">
+<img src="Images/sce_object_counts_matrix.png" class="centerimg" style="width: 100%">
+</div>
+
+<div style="width: 80%; float: left;">
+ To access counts from sce object: __`counts(sce)`__ 
+</div>
+
+## Feature metadata
+
+<div style="width: 75%; float: top; padding-left: 10%">
+<img src="Images/sce_object_feature_metadata.png" class="centerimg" style="width: 100%">
+</div>
+
+<div style="width: 80%; float: left;">
+ To access gene metadata from sce object: __`rowData(sce)`__
+</div>
+
+## Droplet annotation (Cell metadata)
+
+<div style="width: 75%; float: top; padding-left: 10%">
+<img src="Images/sce_object_cell_metadata.png" class="centerimg" style="width: 100%">
+</div>
+
+<div style="width: 80%; float: left;">
+ To access cell metadata from sce object: __`colData(sce)`__
+</div>
+
+## Properties of RNAseq data - Total UMIs 
+
+```{r echo=FALSE, out.width='50%', fig.align='center'}
+knitr::include_graphics('Images/genes_by_umi.png')
+```
+
+## Properties of RNAseq data - Distribution of counts for a gene across cells
+
+```{r echo=FALSE, out.width='50%', fig.align='center'}
+knitr::include_graphics('Images/top_expressed_genes.png')
+```
+
+## Properties of RNAseq data - Distribution of UMI counts 
+
+```{r echo=FALSE, out.width='100%', fig.align='center', out.height='100%'}
+knitr::include_graphics('Images/QC_UMI_Counts_Distrubution.jpg')
+```
+
+## Properties of RNAseq data - Distribution of genes per cell 
+
+```{r echo=FALSE, out.width='100%', fig.align='center', out.height='100%'}
+knitr::include_graphics('Images/QC_Genes_per_Cell_Distribution.jpg')
+```
+
+## Properties of RNAseq data - Distribution of mitochondrial genes
+
+```{r echo=FALSE, out.width='100%', fig.align='center', out.height='100%'}
+knitr::include_graphics('Images/QC_Mito_percent_distri.jpg')
+```
+
+## Challenges 
+
+<div style="width: 80%; float: left;">
+
+* Selecting appropriate thresholds for filtering, so that high quality cells are kept without removing biologically relevant cell types   
+  * Differentiating poor quality cells from less complex ones  
+  * Differentiating transcriptionally active cell types from multiplets/doublets
+  * Distinguishing dead cells from those cells that express a high proportion of  mitochorial genome
+
+</div>
+
+## Recommendations
+
+<div style="width: 80%; float: left;">
+* Ensure that you know what types of cells you expect to be present before performing the QC.  
+* Are you expecting to find low complexity cells in your sample or cells with higher levels of mitochondrial expression? 
+* __When assessing the quality of our data, we must take this biology into consideration__ 
+</div>
+
+
+
+

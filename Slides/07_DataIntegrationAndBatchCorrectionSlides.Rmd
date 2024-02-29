@@ -1,0 +1,266 @@
+---
+title: "Data Integration and Batch Correction"
+date: "May 2023"
+output:
+  ioslides_presentation:
+    widescreen: yes
+    smaller: yes
+    logo: Images/uniOfCamCrukLogos.png
+    css: css/stylesheet.css
+  beamer_presentation: default
+---
+
+
+## Single Cell RNAseq Analysis Workflow
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/workflow2_dataSetIntegra.png')
+```
+
+## Why do we need to think about data integration?
+
+- There are generally three reasons for this
+  - **Batch effects**: 
+    - Process samples in batches, different dates, different technicians, different technologies etc
+  - **Biological effects**: 
+    - A study involving male and female subjects with the same disease will often have gender-specific clusters when visualized using t-SNE. 
+    - Need to integrate to remove the "gender" effect and to identify shared cell types.
+  - **Distinct cellular modalities**: 
+    - For examples for the same study one may profile single cell level transcriptomics or spatial transcriptomics or single cell's immunophenotype
+    - Integration is required to to get comprehensive functional understanding of these data sets.
+    
+  
+
+## Data Integration Workflow
+
+<img src="Images/DI_workflow.png" class="center" style="width: 100%; margin-top: 40px;">
+
+## Formatting our data
+
+A few ways our data can be arranged (software-dependent too)
+
+- one large SCE object containing many samples
+
+- many single-sample SCE objects, QC'd in isolation
+
+- multiple large SCE objects with multiple samples
+
+
+Important we make sure things match up
+
+- Different bioconductor versions
+
+- Different analysts may have formatted things differently
+
+
+## Cellranger `aggr`
+
+A useful quick look
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/10X_cellranger_aggr.png')
+```
+
+## Checking for batch effects
+
+<img src="Images/batchCor_prePCA.png" class="centerimg" style="width: 32%; margin-top: 60px;">
+<img src="Images/batchCor_preTSNE.png" class="left" style="width: 32%; margin-top: 60px;">
+<img src="Images/batchCor_preUMAP.png" class="right" style="width: 32%; margin-top: 60px;">
+
+## Batch Corrections
+
+- Gaussian/Linear Regression - removeBatchEffect (limma), comBat (sva), rescaleBatches or regressBatches (batchelor)
+
+- Mutual Nearest Neighbours (MNN) correction - [Haghverdi et al 2018](https://www.nature.com/articles/nbt.4091)
+
+  - mnnCorrect (batchelor)
+  
+  - FastMNN (batchelor)
+
+- And [many more](https://www.scrna-tools.org/tools?sort=name&cats=Integration)! 
+
+  - Different methods may have strenghts and weaknesses
+
+  - [Benchmark studies](https://theislab.github.io/scib-reproducibility/) can be used as a reference to choose suitable method
+
+## FastMNN ([Haghverdi et al 2018](https://www.nature.com/articles/nbt.4091)) {#less_space_after_title}
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/MNNcorrect.jpeg')
+```
+
+1. Perform a multi-sample PCA on the (cosine-)normalized expression values to reduce dimensionality.
+2. Identify MNN pairs in the low-dimensional space between a reference batch and a target batch.
+3. Remove variation along the average batch vector in both reference and target batches.
+4. Correct the cells in the target batch towards the reference, using locally weighted correction vectors.
+5. Merge the corrected target batch with the reference, and repeat with the next target batch.
+
+
+## FastMNN ([Haghverdi et al 2018](https://www.nature.com/articles/nbt.4091))
+
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/MNN_batch_correction_1.png')
+```
+
+## FastMNN ([Haghverdi et al 2018](https://www.nature.com/articles/nbt.4091))
+
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/MNN_batch_correction_2.png')
+```
+
+
+## FastMNN ([Haghverdi et al 2018](https://www.nature.com/articles/nbt.4091))
+
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/MNN_batch_correction_3.png')
+```
+
+## FastMNN ([Haghverdi et al 2018](https://www.nature.com/articles/nbt.4091))
+
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/MNN_batch_correction_4.png')
+```
+
+## FastMNN ([Haghverdi et al 2018](https://www.nature.com/articles/nbt.4091))
+
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/MNN_batch_correction_5.png')
+```
+
+## FastMNN ([Haghverdi et al 2018](https://www.nature.com/articles/nbt.4091))
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/MNN_batch_correction_6.png')
+```
+
+## FastMNN ([Haghverdi et al 2018](https://www.nature.com/articles/nbt.4091))
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/MNN_batch_correction_7.png')
+```
+
+
+## FastMNN ([Haghverdi et al 2018](https://www.nature.com/articles/nbt.4091))
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/MNN_batch_correction_8.png')
+```
+
+
+## FastMNN ([Haghverdi et al 2018](https://www.nature.com/articles/nbt.4091))
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/MNN_batch_correction_9.png')
+```
+
+
+## FastMNN ([Haghverdi et al 2018](https://www.nature.com/articles/nbt.4091))
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/MNN_batch_correction_10.png')
+```
+
+
+
+## FastMNN ([Haghverdi et al 2018](https://www.nature.com/articles/nbt.4091)) {#less_space_after_title}
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/MNNcorrect.jpeg')
+```
+
+1. Perform a multi-sample PCA on the (cosine-)normalized expression values to reduce dimensionality.
+2. Identify MNN pairs in the low-dimensional space between a reference batch and a target batch.
+3. Remove variation along the average batch vector in both reference and target batches.
+4. Correct the cells in the target batch towards the reference, using locally weighted correction vectors.
+5. Merge the corrected target batch with the reference, and repeat with the next target batch.
+
+## FastMNN ([Haghverdi et al 2018](https://www.nature.com/articles/nbt.4091)) {#less_space_after_title}
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/MNNcorrect.jpeg')
+```
+
+<div>
+Assumptions (quoted from the paper): 
+
+1. There is at least one cell population that is present in both batches, 
+2. the batch effect is almost orthogonal [i.e. uncorrelated] to the biological subspace, and 
+3. the batch-effect variation is much smaller than the biological-effect variation between different cell types
+</div>
+
+## Checking our correction has worked
+
+<img src="../Images/batchCor_corPCA.png" class="centerimg" style="width: 32%; margin-top: 60px;">
+<img src="../Images/batchCor_corTSNE.png" class="left" style="width: 32%; margin-top: 60px;">
+<img src="../Images/batchCor_corUMAP.png" class="right" style="width: 32%; margin-top: 60px;">
+
+## Checking our correction has worked
+
+We can look at the 'mixing' between batches and calculate the variance in the log-normalized cell abundances across batches for each cluster.
+
+Clusters are ranked by variance for manual inspection.
+
+If variance is too high it could indicate there isn't sufficient correction.
+
+```{r echo=FALSE, out.width='85%', fig.align='center'}
+knitr::include_graphics('Images/ExampleBatchVariance.png')
+```
+
+## Checking our correction has worked
+
+```{r echo=FALSE, out.width='40%', fig.align='center'}
+knitr::include_graphics('Images/NestedClustersHeatmap.png')
+```
+
+<div>
+- Investigating which clusters from before correction are nested inside the clusters after correction can help us decide if our correction has worked.
+- Did the whole before cluster from one sample go into an after cluster or was it broken apart?
+- Perfect nesting would be indicated by one orange/red block in each row
+- But do we want that?
+
+## Checking our correction hasn't over worked
+
+- If you use fastMNN in the absence of a batch effect, it may not work correctly
+
+- It is possible to remove genuine biological heterogeneity
+
+- fastMNN can be instructed to skip the batch correction if the batch effect is below a threshold. You can use the effect sizes it calculates to do this.
+
+- In reality the absence of any batch effect would warrant further investigation.
+
+## Checking our correction hasn't over worked
+
+- One way to measure if we have retained heterogeneity is to look at the agreement between clusters before and after correction
+- Adjusted Rand Index 
+- HIGH = GOOD (eg. 0.8 = within batch variation is retained)
+
+<div>
+
+```{r echo=FALSE, out.width='30%', fig.align='center'}
+knitr::include_graphics('Images/ARIheatmap.png')
+```
+
+- ARI can also be broken down into per-cluster ratios
+
+## Checking our correction hasn't over worked
+
+- There is also an MNN specific metric we can calculate called 'lost variance'
+- How much variance within each batch has been removed by the correction
+- Ideal < 0.1 or 10%
+- Higher levels indicate artificial smoothing of data
+
+## Using the corrected values
+
+The value in batch correction is that it enables you to see population heterogeneity within clusters/celltypes across batches. 
+
+  - Also increases the number of cells you have
+  
+However the corrected values should not be used for gene based analysis eg. DE/marker detection.
+
+  - fastMNN doesn't preserve the magnitude or direction of per-gene expression and may have introduced artificial agreement between batches on the gene level.
+
