@@ -1,0 +1,351 @@
+---
+title: "Introduction to single-cell RNA-seq analysis"
+subtitle: 'Quality Control - Practical'
+output:
+  html_document:
+    toc: yes
+    number_sections: true
+    code_folding: show 
+    css: ../css/boxes.css
+---
+
+```{r setup, echo=FALSE, include=FALSE, message=FALSE}
+library(DropletUtils)
+library(scater)
+library(ensembldb)
+library(AnnotationHub)
+library(BiocParallel)
+library(tidyverse)
+knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE, cache=TRUE)
+set.seed(123)
+```
+
+# Introduction
+
+In the course materials we performed QC and filtering of 2 samples from each
+of the sample groups. For this challenge we would like you to perform QC and 
+filtering on all of the samples from the Caron data set. 
+
+# Load packages
+
+```{r packages, eval=FALSE}
+library(DropletUtils)
+library(scater)
+library(ensembldb)
+library(AnnotationHub)
+library(BiocParallel)
+library(tidyverse)
+```
+
+# Sample meta data
+
+We will load both the Caron and HCA data sets. We have already prepared a sample
+meta data table that relates the sample/run ID to the sample group.
+
+```{r load_samplesheet, message=FALSE}
+samplesheet <- read_tsv("Data/sample_sheet.tsv")
+```
+
+**NOTE**: There are two PBMMC_1 samples. These are two libraries from the same
+sample material. Later on, we will combine these to form a single sample, but 
+for now we will need to rename them so that they are QC'd separately.
+
+# Read CellRanger outputs into R
+
+## Parallelisation
+
+We first need to first set up some parallel parameters using the package
+`BiocParallel`.
+
+```{r parallelisation}
+bp.params <- MulticoreParam(workers = 7)
+```
+
+## Load the data
+
+:::exercise 
+In order to load the CellRanger data for all of the samples, you will first
+need to create a named vector of the paths to the filtered count matrix folders 
+called `list_of_files` and then use this in the `read10xCounts` command. 
+
+<details><summary>Hint</summary>
+The paths to `filtered_feature_bc_matrix` directories for each sample can be
+constructed using the **Sample** column as:   
+
+<span style = "color: #545454; font-weight: bold;">Data/CellRanger_Outputs/<span style="color: #2e2892; font-style: italic;">*Sample*</span>/outs/filtered_feature_bc_matrix</span>
+
+You will need to use a function such as `str_c` or `paste`
+
+The names of the vector will determine the sample name used in the counts 
+matrix, this should be the 'SRR' number as in the **Sample** column of the
+sample sheet.
+</details>
+
+
+<details><summary>Answer</summary>
+```{r load_data_answer, purl=FALSE}
+samples_list <- samplesheet$Sample
+list_of_files <- str_c("Data/CellRanger_Outputs/", 
+                       samples_list, 
+                       "/outs/filtered_feature_bc_matrix")
+names(list_of_files) <- samples_list
+
+    
+sce <- read10xCounts(list_of_files, col.names=TRUE, BPPARAM = bp.params)
+```
+</details>
+
+:::
+
+## Check samples in the data set
+
+A good sanity check is to look at the colData to ensure that we have all the
+samples we are expecting and check the overall size of the new object.
+
+```{r check_data_object}
+colData(sce) %>%
+    as.data.frame() %>% 
+    select(Sample) %>% 
+    distinct()
+sce
+```
+
+## Modify the droplet annotation
+
+We need to modify the cell barcodes so that they unique for each sample. 
+
+We will also add information from the sample sheet to the droplet annotation.
+
+```{r add_metadata}
+sce$Barcode <- rownames(colData(sce))
+colData(sce) <- merge(colData(sce), samplesheet, by="Sample", sort=FALSE)
+rownames(colData(sce)) <- sce$Barcode
+```
+
+# Undetected genes
+
+Remove undetected genes.
+
+```{r detected_genes}
+detected_genes <- rowSums(counts(sce)) > 0
+sce <- sce[detected_genes,]
+```
+
+:::exercise
+
+What proportion of genes have been detected
+
+<details><summary>Answer</summary>
+```{r percentage_detected_answer}
+mean(detected_genes)
+```
+
+Approximately `r round(mean(detected_genes), 3)*100` percent of genes were
+detected in at least one sample.
+</details>
+
+:::
+
+# Annotate genes
+
+In order to assess the percentage of mitochondrial UMIs, we will need to be
+able to identify mitochondrial genes. The simplest way to do this is to annotate
+the genes with their chromosome of origin.
+
+```{r annotate_genes}
+ah <- AnnotationHub()
+ens.hs.107<- query(ah, c("Homo sapiens", "EnsDb", 107))[[1]] 
+
+genes <- rowData(sce)$ID
+gene_annot <- AnnotationDbi::select(ens.hs.107, 
+                                    keys = genes,
+                                    keytype = "GENEID",
+                                    columns = c("GENEID", "SEQNAME")) %>%
+    set_names(c("ID", "Chromosome"))
+rowData(sce) <- merge(rowData(sce), gene_annot, by = "ID", sort=FALSE)
+rownames(rowData(sce)) <- rowData(sce)$ID
+
+rowData(sce)
+```
+
+
+# Add per cell QC metrics
+
+Now add the per cell QC metrics to the droplet annotation using the
+function `addPerCellQC`.
+
+```{r add_per_cell_QC}
+is.mito <- which(rowData(sce)$Chromosome=="MT")
+
+sce <- addPerCellQC(sce, subsets=list(Mito=is.mito), BPPARAM = bp.params)
+```
+
+# Explore QC metric distribution
+
+Before moving on to do the actual cell filtering, it is always a good idea to
+explore the distribution of the metrics across the droplets.
+
+:::exercise
+Use the `scater` function `plotColData` to generate plots showing the
+distributions of the total number of UMIs, the number of genes detected and
+percentage of UMIs aligned to mitochondrial genes across all cells for each
+sample.
+
+This time we will use `facet_wrap` to split the plot according to the Sample
+Group. We will need to include the sample group in the plot data using the 
+`other_fields` argument in `plotColData` (see the help page for details - 
+`?plotColData`) in order that we can use it in the `facet_wrap` command. 
+
+The code for plotting the total number of UMIs is shown below. You will also
+need to plot the the number of genes detected and percentage of UMIs aligned to
+mitochondrial.
+
+```{r plot_library_size, eval = FALSE, fig.width=12, fig.height=4}
+plotColData(sce, x="SampleName", y="sum", other_fields="SampleGroup") + 
+    facet_wrap(~SampleGroup, nrow=1, scales = "free_x") + 
+    scale_y_log10() + 
+    ggtitle("Total count")
+```
+
+<details><summary>Answer</summary>
+```{r plot_detected_genes_answer, eval = FALSE, purl=FALSE, fig.width=12, fig.height=4}
+plotColData(sce, x="SampleName", y="detected", other_fields="SampleGroup") + 
+    facet_wrap(~SampleGroup, nrow=1, scales = "free_x") + 
+    scale_y_log10() + 
+    ggtitle("Detected features")
+```
+
+```{r plot_MT_content_answer, eval = FALSE, purl=FALSE, fig.width=12, fig.height=4}
+plotColData(sce, 
+            x="SampleName", 
+            y="subsets_Mito_percent", 
+            other_fields="SampleGroup") + 
+    facet_wrap(~SampleGroup, nrow=1, scales = "free_x") +
+    ggtitle("Mito percent")
+```
+</details>
+
+:::
+
+```{r total_UMI_plot, echo = FALSE, purl=FALSE, fig.width=12, fig.height=4}
+plotColData(sce, x="SampleName", y="sum",other_fields="SampleGroup") + 
+    facet_wrap(~SampleGroup, nrow=1, scales = "free_x") + 
+    scale_y_log10() + 
+    ggtitle("Total count")
+```
+
+```{r gene_detected_plot, echo = FALSE, purl=FALSE, fig.width=12, fig.height=4}
+plotColData(sce, x="SampleName", y="detected", other_fields="SampleGroup") + 
+    facet_wrap(~SampleGroup, nrow=1, scales = "free_x") + 
+    scale_y_log10() + 
+    ggtitle("Detected features")
+```
+
+```{r MT_plot, echo = FALSE, fig.width=12, purl=FALSE, fig.height=4}
+plotColData(sce, x="SampleName", y="subsets_Mito_percent", other_fields="SampleGroup") + 
+    facet_wrap(~SampleGroup, nrow=1, scales = "free_x") +
+    ggtitle("Mito percent")
+```
+
+# Identification of low-quality cells with adaptive thresholds
+
+:::exercise
+
+Use the scater function `quickPerCellQC` to assess cell quality based
+on the three metrics. Name the object generated `cell_qc_results`.  
+
+When running the command, consider the distribution plots above and decide
+whether to use the `batch` option and if so, at what level it should be
+applied.
+
+How many cells will be removed from the data set?
+
+
+<details><summary>Hint</summary>
+With these samples we have three possible "batch" levels at which we could 
+run adaptive filtering. We could apply the filtering across all samples 
+together (i.e. no `batch`), we could apply it by sample group (ETV6-RUNX1, 
+HHD, PBMMC, PRE-T), or we could apply it per sample. 
+</details>
+
+
+<details><summary>Answer</summary>
+It is clear that there are significantly different distribution profiles between
+samples in the same group. Noticeably the distribution profiles for the two HDD
+samples are quite different. For this reason it may be prudent to apply the
+adaptive filtering to each sample independently.
+
+```{r quickPerCellQC_batch, purl=FALSE}
+cell_qc_filters <- quickPerCellQC(colData(sce),
+                                  sub.fields = TRUE,
+                                  batch=sce$Sample)
+
+as.data.frame(cell_qc_filters) %>% summarise(across(everything(), sum))
+```
+
+In total `r sum(cell_qc_filters$discard)` cells will be removed from the
+dataset.
+
+</details>
+
+:::
+
+Let's add the columns in the droplet annotation with these new filters.
+
+```{r quickPerCellQC_batch_add}
+colData(sce) <- cbind(colData(sce), cell_qc_filters)
+```
+
+We can visualise how the new filters look using violin plots.
+
+```{r plot_library_size_filtering, fig.width=12, fig.height=4}
+plotColData(sce, 
+            x="SampleName", 
+            y="sum",
+            other_fields="SampleGroup", 
+            colour_by = "low_lib_size") + 
+    facet_wrap(vars(SampleGroup), nrow=1, scales = "free_x") + 
+    scale_y_log10() + 
+    labs(y = "Total count", title = "Total count") +
+    guides(colour=guide_legend(title="Discarded"))
+```
+
+```{r plot_detected_genes_filtering, fig.width=12, fig.height=4}
+plotColData(sce, 
+            x="SampleName", 
+            y="detected",
+            other_fields="SampleGroup", 
+            colour_by = "low_n_features") + 
+    facet_wrap(vars(SampleGroup), nrow=1, scales = "free_x") + 
+    scale_y_log10() + 
+    labs(y = "Genes detected", title = "Genes detected") +
+    guides(colour=guide_legend(title="Discarded"))
+```
+
+```{r plot_MT_content_filtering, fig.width=12, fig.height=4}
+plotColData(sce, 
+        x="SampleName", 
+        y="subsets_Mito_percent",
+        other_fields="SampleGroup", 
+        colour_by = "high_subsets_Mito_percent") + 
+    facet_wrap(vars(SampleGroup), nrow=1, scales = "free_x") + 
+    labs(y = "Percentage mitochondrial UMIs",
+         title = "Mitochondrial UMIs") +
+    guides(colour=guide_legend(title="Discarded"))
+```
+
+# Filtering out poor quality cells
+
+Filter out the poor quality cells.
+
+```{r rerun_per_cell_QC}
+sce <- sce[, !sce$discard]
+```
+
+# Session information
+
+<details>
+```{r}
+sessionInfo()
+```
+</details>

@@ -1,0 +1,749 @@
+---
+title: "Introduction to single-cell RNA-seq analysis"
+subtitle: "Cluster marker genes"
+output:
+  html_document:
+    toc: yes
+    toc_float: true
+    number_sections: true
+    code_folding: show 
+    css: ../css/boxes.css
+---
+
+
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE, purl=FALSE}
+knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE, cache=TRUE)
+knitr::opts_knit$set(root.dir = "../course_files")
+set.seed(123)
+```
+
+
+# Introduction
+
+In order to aid the interpretation of the clustering results that we covered in
+the [previous section](08_Clustering.html), it is helpful to identify genes that
+contribute to the separation of cells into those clusters.
+
+The main approach to achieve this, is to identify genes that are differently
+expressed between clusters. These may be, for example, exclusively expressed in
+a single cluster or perhaps differentiate between a few different clusters.
+There are different methods to identify expression differences between clusters:
+using mean expression level, or the ranking of the gene by its expression, or
+the proportions of cells that express the gene.
+
+Our main objective in this section is to cover some of the methods that can be used to achieve this goal, and obtain a summary table of results.
+As always, the [OSCA chapter on marker detection](https://bioconductor.org/books/release/OSCA.basic/marker-detection.html)
+contains additional detail and advice.
+
+
+# Load data
+
+```{r, echo=FALSE}
+# Setup & Data ----
+```
+
+```{r load_packages}
+# load packages
+library(scater)
+library(scran)
+library(tidyverse)
+library(patchwork)
+```
+
+We will use the data set generated in the clustering session. This contains 7
+samples from the Caron data set. For the purposes of these materials, in the
+interests of time, each sample has been downsampled to only contain 500 cells.
+
+```{r load_data}
+# read single cell object
+sce <- readRDS("R_objects/Caron_clustered.500.rds")
+```
+
+Note that we have also replaced the gene names (rownames) of our objects to use
+common gene names instead of Ensembl IDs. This was done using the
+`uniquifyFeatureNames()` function, which makes this safely by avoiding duplicate gene
+names.
+
+```{r look_at_rownames, purl=FALSE}
+rownames(sce)[11:20]
+```
+
+
+For this demonstration we will investigate the clustering generated using the
+Leiden clustering algorithm with *k* set to 25. The results of this clustering
+have been added to a column in the `colData` called **"label"** using the 
+`colLabels()` accessor. The advantage of this is that should we later decide to
+use a different clustering or labels (such as cell types), we can simply change 
+the contents of this column and there would be no need to modify any subsequent 
+code.
+
+Double check that the "label" column contains the clustering that we are
+interested in:
+
+```{r check_label_column}
+# check labels are set to our clusters
+all(sce$k.25_cluster.fun.leiden == sce$label)
+```
+
+To remind ourselves, we can visualise the clusters on a UMAP:
+
+```{r clusters_umap}
+# visualise UMAP of our clusters
+plotReducedDim(sce, 
+               dimred = "UMAP_corrected",
+               colour_by = "label", 
+               text_by = "label")
+```
+
+Our objective is to identify genes that distinguish these clusters from one
+another - "cluster marker genes". Intuitively we hope that the clusters relate
+to specific cell populations, and therefore we are trying to find genes that
+will allow us to identify the cell types for each cluster.
+
+For example genes such as the "CST3" gene, which is a known monocyte marker:
+
+```{r cst3_umap}
+# visualise monocyte-specific marker
+plotReducedDim(sce, 
+               dimred = "UMAP_corrected",
+               colour_by = "CST3", 
+               text_by = "label", 
+               by_exprs_values = "reconstructed",
+               add_legend = FALSE)
+```
+
+
+# Identifying cluster marker genes
+
+Although we have defined our clusters based on the batch-corrected expression
+values, these should **not** be used for for gene-based analyses like marker
+gene detection. Instead, we should **use the uncorrected (normalised) expression
+values for differential expression between clusters**. This is because data
+integration algorithms bring cells together based on their overall gene
+expression, but for each gene individually the data transformation may introduce
+artificial agreement between batches, which is not ideal for gene-level
+differential analysis. Furthermore, the severity of these biases is dependent on
+the parameters used for data integration (such as the number of nearest
+neighbours in the `fastMNN()` method).
+
+Valid assays to use in gene based differential analysis tests are the normalised
+counts obtained from the deconvolution method (using
+`scuttle::computePooledFactors()` + `scuttle::logNormCounts()`) or from the
+variance stabilising transformation method (using `sctransform::vst()`). In our
+SCE object, we have the normalised counts in the "logcounts" assay, which we can
+access with `assay(sce, "logcounts")` (or using the shortcut `logcounts(sce)`).
+
+
+## Pairwise Cluster Comparisons
+
+```{r, echo=FALSE}
+
+# Score markers ----
+```
+
+The basic approach for marker gene identification across clusters is to perform
+statistical tests for each gene between every pair of clusters. The
+`scoreMarkers()` function can do this for us, while accounting for known factors
+(aka "blocking factors" or "blocks"), such as sample batch. 
+
+The `scoreMarkers()` function outputs a _list_ of `DataFrame` objects, one for each
+cluster compared to all others. However, note that the blocking assumes that
+each pair of clusters is present in at least one of the blocks. If there are two
+clusters which are not both present in at least one block (in our case
+Samples), then that pairwise comparison will by necessity be omitted.
+
+By default the `scoreMarkers()` function will use the log-normalised counts as
+stored in the "logcounts" assay slot of the single cell object, so there is no 
+need for us to specify it.
+
+```{r score_markers}
+# calculate pairwise marker gene statistics
+markers <- scoreMarkers(sce, 
+                        groups = sce$label, 
+                        block = sce$SampleName)
+```
+
+The returned object is a list of the same length as the number of clusters. 
+We can access the results for a particular cluster thus:
+
+```{r score_markers_results_cluster_11}
+# extract results for cluster 11
+c11_markers <- as.data.frame(markers[["11"]])
+head(c11_markers)
+```
+
+This DataFrame contains the results for cluster 10. 
+The first four columns contain summary statistics:
+
+* **self.average** - the mean log-expression in the cluster of interest
+* **other.average** - the grand mean across all other clusters
+* **self.detected** - the proportion of cells with detected expression in the
+cluster of interest
+* **other.detected** - the mean detected proportion across all other clusters.
+
+The remaining columns contain summaries of three scores from the pairwise
+comparisons. The three scores are:
+
+* **logFC.cohen** - "Cohen's *d*" - this is the log fold change of mean gene
+expression standardized by the average standard deviation across the groups. 
+This can be interpreted in a similar way to log fold change in that a positive 
+value indicates upregulation in the cluster of interest.
+* **AUC** - "Area Under the Curve" - this quantifies the ability to distinguish
+between two gene expression distributions. It can be interpreted as the
+likelihood that any random cell in the cluster of interest will have a higher
+expression of the gene than any random cell in the other cluster. It ranges from
+0 to 1, where 1 can be interpreted as upregulation, 0 downregulation, and 0.5 as
+no difference.
+* **logFC.detected** - this is the log fold change in the proportion of cells in
+which the gene is detected in the cluster of interest, versus the proportion of
+cells in which the gene is detected in the other cluster. Positive values
+indicate that the gene is detected in more cells in the cluster of interest than
+the other cluster. Note, this takes no account of the magnitude of the gene
+expression, instead this metric helps to identify presence/absence differences
+in gene expression between clusters.
+
+More detail on the differences between these effect size scores can be found in
+the ["Advanced" Marker detection chapter of the OSCA
+book](http://bioconductor.org/books/3.15/OSCA.advanced/marker-detection-redux.html#properties-of-each-effect-size).
+
+Whilst all the pairwise scores can be retrieved by adding the argument
+`full.stats=TRUE` to `scoreMarkers()`, by default this function returns 5
+summary statistics for each score:
+
+* **mean.X** - this is the mean of the score across all pairwise comparisons. It
+gives the relative expression of the gene versus the average of the other
+clusters.
+* **min.X** - this is the minimum score obtained across all pairwise
+comparisons. This is the most stringent summary statistic for detecting
+upregulated genes, if the score is high, then the gene is upregulated in the
+cluster of interest relative to *all* other clusters. Conversely, if the minimum
+is low, then the gene is downregulated relative to *at least one* other cluster.
+* **median.X** - this is the median of the score across all pairwise
+comparisons. It is more robust to outliers than the mean. Whilst this is
+beneficial in avoiding the situation where the effect size is very large in only
+a small number of comparisons, it may conversely be detrimental to marker gene
+selection if there are small number of clusters with very similar effect sizes,
+as these will be effectively ignored.
+* **max.X** - this is the maximum score obtained across all pairwise
+comparisons. This is the least stringent summary statistic for detecting
+upregulated genes as a high score only indicates that the gene is upregulated in
+the cluster of interest relative to *at least one* other clusters. Conversely,
+if the maximum is low, then the gene is downregulated relative to *all* other
+clusters.
+* **rank.X** - This is the minimum ranking ("min-rank") of that gene by that
+score across all clusters. For each pairwise comparison the genes are ranked
+according to the score, this summary provides the lowest rank for that gene
+across all comparisons. Essentially, a gene with a low "min-rank" will be one of
+the best genes according to that score in at least one comparison.
+
+The choice of the summary used for ranking will effect the stringency of the
+selection. See the [the OSCA books "Basic" chapter on Marker gene
+detection](http://bioconductor.org/books/3.15/OSCA.basic/marker-detection.html#summarizing-pairwise-effects)
+for further discussion of these different summaries. In general the mean and
+median make reasonable defaults for most applications. In practice, the minimum
+and maximum are most helpful for diagnosing discrepancies between the mean and
+median, rather than being used directly for ranking.
+
+Selecting genes based on a given min-rank, say *5*, is useful as it will
+generate a list of genes that is the union of genes with a rank of 5 or less for
+any pairwise comparison. This will ensure we get at least 5 genes that
+distinguish the cluster of interest from all other clusters.
+
+For example using the min-rank for Cohen's *d* on cluster 11 yields 20 marker
+genes: 
+
+```{r top_genes_cluster_11}
+# filter markers based on rank statistics
+c11_markers %>% 
+  select(contains("cohen")) %>%
+  filter(rank.logFC.cohen <= 5) %>%
+  arrange(rank.logFC.cohen)
+```
+
+As we suspected, cluster 11 is likely to contain monocytes, based on the
+expression of _CST3_ and _TYROBP_, for example.
+
+We can visualise the expression of some of the other top-ranked genes: 
+
+```{r plot_UMAP_LYZ, fig.width=12}
+# visualise one of the markers
+p1 <- plotReducedDim(sce, 
+                     dimred = "UMAP_corrected",
+                     colour_by = "LYZ", 
+                     text_by = "label")
+
+p2 <- plotExpression(sce, features = "LYZ", x = "label")
+
+p1 + p2
+```
+
+
+:::exercise
+
+```{r exercise1_header, echo=FALSE}
+
+# Exercise 1 ----
+```
+
+Based on the expression of _CD3D_, which is a known marker for T cells, it seems
+likely that cells in clusters 6 and 7 are T cells.
+
+```{r exercise_1_CD3D_expression}
+# CD3D suggests cluster 6 and 7 are T cells
+plotReducedDim(sce, 
+               dimred = "UMAP_corrected",
+               colour_by = "CD3D", 
+               text_by = "label")
+
+plotExpression(sce, 
+               features = "CD3D", 
+               x = "label")
+```
+
+```{r, echo=FALSE}
+# Confirm this by identifying other genes that differentiate
+# these two clusters from the rest of the cells.
+
+# 1. Extract results for cluster 6 and convert it to data.frame
+# 2. Filter the data.frame using your choice of ranking statistic -
+#  `rank.logFC.detected` or `rank.logFC.cohen` or a combination of both.
+# 3. Visualise the expression of genes that seem interesting from your filters.
+```
+
+We would like to confirm this by identifying other genes that differentiate
+these two clusters from the rest of the cells.
+
+1. Extract results for cluster 6 and convert it to a data.frame.
+2. Filter the data.frame using your choice of ranking statistic - `rank.logFC.detected` or `rank.logFC.cohen` or a combination of both.
+3. Visualise the expression of genes that seem interesting from your filters.
+
+<details><summary>Hint</summary>
+
+Fix the code below (where the word "FIXME" appears) to extract the data frame
+with metrics for this cluster (from our `markers` object), filter it and
+then plot the expression of a few of the genes.
+
+```{r exercise_1_hint, eval=FALSE, purl=FALSE}
+# extract results from cluster 6 and convert to data.frame
+c6_markers <- FIXME
+
+# filter the data.frame using your choice of ranking statistic
+# `rank.logFC.detected` or `rank.logFC.cohen`
+# or a combination of both!
+c6_markers %>% 
+  filter(FIXME)
+
+# visualise the expression of genes that seem interesting from your filters
+plotExpression(sce, 
+               features = FIXME, 
+               x = "label")
+```
+
+</details>
+
+<details><summary>Answer</summary>
+
+Start by extracting the marker results for cluster 6 from our list:
+
+```{r exercise_1_answer_a, purl=FALSE}
+c6_markers <- as.data.frame(markers[["6"]])
+```
+
+In our case, we chose to then filter our table with two criteria to find genes
+that:
+
+* are in the top 2 ranking for being mostly detected in this cluster (i.e. a presence/absence criteria) 
+
+AND
+
+* have a Cohen's _d_ in the top 10 (i.e. the average expression difference
+should be high, relative to the gene's variance)
+
+```{r exercise_1_answer_b, purl=FALSE}
+c6_top_genes <- c6_markers %>% 
+  filter(rank.logFC.detected <= 2 & rank.logFC.cohen <= 10) %>% 
+  rownames()
+c6_top_genes
+```
+
+We obtain `r length(c6_top_genes)` genes with these criteria.
+Finally, we visualize the expression of these genes:
+
+```{r exercise_1_answer_c, purl=FALSE}
+plotExpression(sce, 
+               features = c6_top_genes, 
+               x = "label")
+```
+
+We can see that all of these genes behave in a similar way to our known
+marker _CD3D_, suggesting they are good markers for these cell types. 
+This makes sense as _CD3D_ and _CD3E_ encode T cell surface proteins.
+[_IL32_](https://en.wikipedia.org/wiki/Interleukin_32) encodes a cytokine, which
+is often associated with cancer and _BCL11B_ is a transcription factor that has
+been linked with T-Cell malignancy.
+This result could open an avenue for further investigation in this study.
+
+</details>
+
+:::
+
+
+## Heatmap of marker genes
+
+```{r, echo=FALSE}
+
+# Heatmaps ----
+```
+
+We have already seen how we can use the `plotExpression()` function to visualise
+the distribution of expression in our data between clusters. We have also seen
+how to use `plotReducedDim()` to visualise a gene's expression on the projected
+reduced dimensionality space.
+
+Another useful type of visualisation is to use **heatmaps** to show the
+expression of these genes of interest. 
+We will demonstrate this using the top marker genes for cluster 11.
+
+```{r cluster_11_top_genes}
+# get top-ranked markers for cluster 11
+c11_top_genes <- c11_markers %>% 
+  filter(rank.logFC.cohen <= 5) %>% 
+  rownames()
+```
+
+We can make generate a heatmap showing the expression in individual cells using
+the function `plotHeatmap()`. We will arrange the columns (cells) so that cells
+from the same cluster and cells from the same samplegroup are grouped together.
+
+```{r cluster_11_heatmap_by_cells}
+# visualise their expression as a heatmap
+plotHeatmap(sce, 
+            features = c11_top_genes,
+            order_columns_by = c("label", "SampleGroup"))
+```
+
+Alternatively, we can summarise the expression across sample goups and generate
+a heatmap showing the average expression across cells within each group using
+the function `plotGroupedHeatmap()`. We can specify any factors causing batch
+effects using the `block` arguments and the batch effects will be regressed out
+of the averages.
+
+```{r cluster_11_heatmap_by_block}
+# heatmap average per group (cluster)
+plotGroupedHeatmap(sce, 
+                   features = c11_top_genes,
+                   group = "label",
+                   block = "SampleGroup")
+```
+
+In both cases, the colour scale of expression is showing the logcounts in their
+original scale. However, for this kind of visualisation, it may sometimes be
+useful to _scale_ the data (aka Z-score), which brings all the genes to the same
+relative scale.
+
+```{r heatmap_with_z_score}
+# scaled heatmap (z-scores)
+plotHeatmap(sce, 
+            features = c11_top_genes,
+            order_columns_by = c("label", "SampleGroup"),
+            scale = TRUE, 
+            center = TRUE,
+            zlim = c(-3, 3))
+
+plotGroupedHeatmap(sce, 
+                   features = c11_top_genes,
+                   group = "label",
+                   block = "SampleGroup",
+                   scale = TRUE, 
+                   center = TRUE,
+                   zlim = c(-3, 3))
+```
+
+In this case, the colour scale can be interpreted as the number of standard
+deviations above/below the mean of that gene across all cells.
+
+Another useful visualisation is to use **dot plots** of expression that show both the average gene expression (as a colour scale) and the number of cells in which the gene is detected (as the size of the points).  
+We can generate such a plot using the `plotDots()` function: 
+
+```{r dot_plot}
+# dot plot of expression showing average expression and detection rate
+plotDots(sce, 
+         features = c11_top_genes,
+         group = "label", 
+         block = "SampleGroup",
+         scale = TRUE, center = TRUE, zlim = c(-3, 3))
+```
+
+
+## Adjusting the log-fold change
+
+```{r, echo=FALSE}
+
+# Adjusting log-fold change ----
+```
+
+The AUC and Cohen's *d* scores incorporate both the gene expression differences
+between the clusters and the variance in gene expression scores within each
+cluster. If a gene has low variance, it is possible that it will be ranked
+highly even if the magnitude of the difference between the clusters is low.
+These genes will not necessarily make good marker genes. It may therefore be
+desirable to favour the detection of genes with larger log-fold changes. 
+
+For example, in the results from cluster 11, the gene _SNX10_ had a min-rank for Cohen's *d* of 5:
+
+```{r c11_top_markers}
+c11_markers["SNX10", ] %>% 
+  select(min.logFC.cohen, max.logFC.cohen, rank.logFC.cohen)
+```
+
+However, we can also see that its LFC goes from 0.3 to 7, which is a large range. 
+Looking at its expression, we can see what might be going on:
+
+```{r plot_snx10_expression}
+plotExpression(sce,
+               features = "SNX10",
+               x = "label")
+```
+
+This gene has very low variation in expression in some clusters (because it's lowly detected), and because Cohen's _d_ measures average differences _scaled by variance_, the gene comes up as having a high value for that metric in some comparisons.
+
+To make our analysis more restrictive, we can instead indicate to the `scoreMarkers()` function what is the minimum LFC threshold we want to use to consider a gene for ranking. 
+For example, a LFC > 2:
+
+```{r score_markers_with_lfc_threshold}
+# score markers with LFC threshold of 2
+markers_lfc <- scoreMarkers(sce,
+                           groups = sce$label,
+                           block = sce$SampleName,
+                           lfc = 2)
+
+# extract new results for cluster 11
+c11_markers_lfc2 <- as.data.frame(markers_lfc[["11"]])
+```
+
+Now, _SNX10_'s rank dropped substantially: 
+
+```{r c12_FLT3_threholded_rank}
+c11_markers_lfc2["SNX10",  c("rank.logFC.cohen")]
+```
+
+In conclusion, using an LFC threshold will change the ranking of the genes, to favour those genes that have highest LFC, even if they have higher variance in expression. 
+
+:::note
+
+**Obtaining p-values from marker gene analysis**
+
+You will notice that we did not make use of p-values in this analysis. 
+The rationale for this is explained in the OSCA book:
+
+> Given that scoreMarkers() already reports effect sizes, it is tempting to take
+the next step and obtain p-values for the pairwise comparisons. Unfortunately,
+the p-values from the relevant tests cannot be reliably used to reject the null
+hypothesis. This is because DE analysis is performed on the same data used to
+obtain the clusters, which represents “data dredging” (also known as fishing or
+data snooping). The hypothesis of interest - are there differences between
+clusters? - is formulated from the data, so we are more likely to get a positive
+result when we re-use the data set to test that hypothesis.
+
+The main thing to remember is that, in practice, this is a valid approach to
+help us annotate groups of cells based on the expression of genes with known
+cell-specificity and to find new interesting genes for further experiments and
+validation (e.g. using microscopy or qPCR).
+In other words, identifying cluster marker genes should be taken as a way to
+generate new hypothesis from our data, rather than a valid statistical model to
+test for differential expression between cell types.
+
+:::
+
+
+# Cell Type Labelling
+
+```{r, echo=FALSE}
+
+# Annotation labels ----
+```
+
+One of the main tasks we often want to perform is annotating our cells as known types of cells ocurring in our sampled tissue. 
+This requires prior knowledge of cell transcriptomic states and therefore becomes easier if there are well-curated resources available. 
+However, for less well-studied tissues these may not be available and so cell type annotation may rely on "manual annotation" using a small set of genes with known cell-specific expression (e.g. from microscopy data, qPCR on cell-sorted samples, etc.). 
+
+In this section we will do a very simple manual labelling of our clusters, based on known genes expressed in different blood cell types. 
+However, there are more systematic methods for cell type annotation, in particular when prior information is available for those cells: 
+
+- The [`SingleR`](https://bioconductor.org/packages/3.16/bioc/vignettes/SingleR/inst/doc/SingleR.html) package uses previously labelled bulk or single-cell datasets to annotate a new dataset.
+- The [`AUCcell`](https://bioconductor.org/packages/3.16/bioc/vignettes/AUCell/inst/doc/AUCell.html) package classifies cells into types based on user-provided lists of "signature" genes for each type. These lists can be generated from literature, or also be based on prior RNA-seq datasets. 
+- Another strategy is to perform a standard gene set enrichment analysis on the top marker genes for each cluster. 
+
+Any of these approaches is suitable, and they can often be done in conjunction. 
+To learn more about these approaches, read the chapter on [cell type annotation in the OSCA book](http://bioconductor.org/books/3.16/OSCA.basic/cell-type-annotation.html).
+
+
+## Manual annotation
+
+A lot is known about immune cell markers, in particular as many surface markers have been identified as useful for [immunophenotyping](https://en.m.wikipedia.org/wiki/Cluster_of_differentiation#Immunophenotyping). 
+
+To help us in our annotation, we start by retrieving the top-ranked genes from each cluster into a list. 
+We do this by looping through the list using the `lapply()` function and in each case picking the genes with rank < 10 for Cohen's D statistic:
+
+```{r all_top_markers}
+# loop through list of marker genes and extract top-ranked gene names
+top_markers_all <- lapply(markers, function(x){
+  x %>% 
+    as.data.frame() %>% 
+    filter(rank.logFC.cohen < 10) %>% 
+    rownames()
+})
+
+# examining this list reveals several known markers of immune cells
+top_markers_all
+```
+
+If we took some time to examine this list (which would benefit from knowing about the underlying biology of the immune system), we can start to see some genes known to differentiate different types of cells: 
+
+- _HBA1_ and _HBA2_ → expressed in red blood cells (erythrocytes)
+- _CST3_ → specific to monocytes
+- _CD3E_ and _CD3D_ → specific to T cells
+- _NKG7_ → specific to natural killer (NK) T cells
+- _CD79A_ and _CD24_ → specific to B cells
+- _MS4A1_ (CD20) → a clinically-important antigen used as a target to treat B cell-related diseases, such as leukemia. Cells with this antigen are referred to as CD20+ B cells.
+
+Let's visualise these markers' expression in our clusters:
+
+```{r all_marker_violins}
+# cell type specific genes
+known_genes <- c(
+  "HBA1", # erythrocytes
+  "CST3", # monocytes
+  "CD3E", # T cells
+  "NKG7", # NK T cells
+  "CD79A",  # B cells
+  "MS4A1" # CD20 B cells
+  )
+
+# violin plot
+plotExpression(sce, x = "label", features = known_genes)
+
+# scaled heatmap of expression
+plotGroupedHeatmap(sce, 
+                   features = known_genes,
+                   group = "label",
+                   block = "SampleGroup", 
+                   scale = TRUE, center = TRUE, 
+                   zlim = c(-3, 3))
+```
+
+Based on the expression patterns for these cells, we classify these clusters as follows: 
+
+| Cluster | Labelled Cell Type                | Evidence      |
+| :------ | :-------------------------------- | :------------ |
+| 1       | B cells                           | CD79A         |
+| 2       | B cells                           | CD79A         |
+| 3       | B cells                           | CD79A         |
+| 4       | B cells                           | CD79A         |
+| 5       | CD20+ B cells                     | CD79A + MS4A1 |
+| 6       | T cells                           | CD3D          |
+| 7       | NK T cells                        | CD3D + NKG7   |
+| 8       | Erythrocytes                      | HBA1          |
+| 9       | Erythrocytes                      | HBA1          |
+| 10      | Erythrocytes                      | HBA1          |
+| 11      | Monocytes                         | CST3          |
+| 12      | B cells                           | CD79A         |
+
+
+Now that we have a more meaningful annotation for our clusters, let's add this to our `SingleCellExperiment` object.
+We will also add the original cluster ID in parenthesis to remind ourselves that this annotation was done based on the clusters. 
+
+The cell labels are stored in the `SingleCellExperiment` object as a _factor_ (a type of object in R to store categorical data), and so we can change the labels using the `levels()` function, like so:
+
+```{r relabel}
+# re-label the cells - original cluster in parenthesis
+levels(colLabels(sce)) <- c("B (c1)", "B (c2)", 
+                            "B (c3)", "B (c4)",
+                            "CD20+ B (c5)", 
+                            "T (c6)", "NK T (c7)", 
+                            "Erythrocytes (c8)", "Erythrocytes (c9)", 
+                            "Erythrocytes c(10)",
+                            "Monocytes (c11)", "B (c12)")
+```
+
+Now, when we label our UMAP, we can see the new labels, which are more intutitive to interpret:
+
+```{r umap_relabel}
+# visualise UMAP with new labels
+plotReducedDim(sce, dimred = "UMAP_corrected", 
+               colour_by = "label", text_by = "label")
+```
+
+
+## (Bonus) Further exploration
+
+### Erythrocytes
+
+Looking at the expression of _HBA1_ and _HBA2_: 
+
+```{r, purl=FALSE}
+# note we rotate the axis labels for convenience
+# this uses standard ggplot2 syntax, see:
+# https://stackoverflow.com/a/60650595/5023162
+plotExpression(sce, x = "label", features = c("HBA1", "HBA2")) +
+  scale_x_discrete(guide = guide_axis(angle = 45))
+```
+
+You may notice that there is a lot of background expression across several cell clusters. 
+_HBA1_ and _HBA2_ are common components of the **"soup" or ambient RNA** in scRNA-seq experiments involving blood cells. 
+Hemoglobin chains, such as _HBA1_ and _HBA2_, are very highly expressed in red blood cells and burst red blood cells will contribute their RNA to the medium from which the cells are loaded into the 10X Chromium machine. 
+Some of this medium, or "soup", containing ambient RNA is captured with each cell. 
+There are methods available to correct for soup in your analysis such as [SoupX](https://academic.oup.com/gigascience/article/9/12/giaa151/6049831).
+
+
+### B Cells
+
+Our simple manual annotation wasn't very conclusive about cluster 12. 
+While it expresses the _CD79A_ B-cell marker, it also appears to be quite separate from other B-cell clusters on our UMAP.  
+
+```{r, purl=FALSE}
+plotReducedDim(sce, dimred = "UMAP_corrected", 
+               colour_by = "CD79A", text_by = "label")
+```
+
+This is also the case for cluster 5, however we could see that it likely represents CD20+ B-cells, which explains its separate clustering.
+However, we didn't have any specific gene in our small list that distinguishes cluster 12 from the other B-cell clusters. 
+
+We could look at our list of top markers and identify any that are unique to this cluster: 
+
+```{r, purl=FALSE}
+# get markers in cluster 12 which are not in the other markers' lists
+setdiff(top_markers_all[[12]], unlist(top_markers_all[1:11]))
+```
+
+And use this list to further investigate the specific properties of this cluster. 
+For example, we can see that _CD38_ (another "cluster of differentiation" gene) is expressed highly in this cluster: 
+
+```{r, purl=FALSE}
+plotExpression(sce, x = "label", 
+               features = "CD38") +
+  scale_x_discrete(guide = guide_axis(angle = 45))
+```
+
+One thing to note is that this cluster only seems to contain cells from PBMMC samples: 
+
+```{r, purl=FALSE}
+table(sce$SampleGroup, sce$label)
+```
+
+Therefore, it suggests there are absent from our cancer blood samples. 
+
+The difficulty in annotating cluster 12 exemplifies the **limitation of manual cell annotation**, which can become quite laborious and limited in its ability to classify cells. 
+
+Also, we should keep in mind that perhaps our clustering wasn't ideal, there may have been technical issues during normalisation and dataset integration, which we should investigate (e.g. by producing UMAP and clustering from different normalisation methods). 
+
+
+# Session information
+
+<details><summary>`sessionInfo()`</summary>
+
+```{r, purl=FALSE}
+sessionInfo()
+```
+
+</details>

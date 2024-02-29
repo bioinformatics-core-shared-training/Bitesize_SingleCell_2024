@@ -1,0 +1,650 @@
+---
+title: "Introduction to single-cell RNA-seq analysis"
+subtitle: Normalisation
+output:
+  html_document:
+    toc: yes
+    number_sections: true
+    code_folding: show 
+---
+
+# Normalisation
+
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
+library(knitr)
+library(scater)
+library(scran)
+library(sctransform)
+library(tidyverse)
+library(BiocParallel)
+library(patchwork)
+
+bpp <- MulticoreParam(7)
+opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE, cache=TRUE)
+set.seed(123)
+```
+
+Acknowledgments: much of the material in this section hase been derived from the 
+chapters on normalisation in the
+[OSCA book](http://bioconductor.org/books/3.14/OSCA.basic/normalization.html) 
+and the [Hemberg Group course materials](https://www.singlecellcourse.org/).
+
+
+
+```{r load_packages, eval=FALSE}
+library(scater)
+library(scran)
+library(sctransform)
+library(tidyverse)
+library(BiocParallel)
+library(patchwork)
+bpp <- MulticoreParam(7)
+```
+
+## Load data object
+
+For the purposes of this demonstration we have generated a smaller data set in
+which there are only 500 cells per sample. This is so that the code can be run
+in a reasonable amount of time during the live teaching session. The data were
+first QC'd and filtered as described in the [QC and exploratory analysis 
+session](04_Preprocessing_And_QC.html). After this 500 cells were selected at
+random from each sample.
+
+```{r load_data}
+sce <- readRDS("R_objects/Caron_filtered.500.rds")
+sce
+table(sce$SampleName)
+```
+
+
+## Learning objectives
+
+* Understand why normalisation is required
+* Understand concepts of two normalisation methods
+  * deconvolution
+  * sctransform 
+
+## Why normalise?
+
+```{r norm_intro_plots}
+oneSamTab <- colData(sce) %>% 
+  as.data.frame() %>% 
+  filter(SampleName == "PBMMC_1") %>% 
+  dplyr::select(SampleName,Barcode, sum) %>% 
+  mutate(cell_num = 1:n())
+
+p_before_nom <- ggplot(data=oneSamTab, aes(x=cell_num, y=sum)) +
+  geom_bar(stat = 'identity') +
+  labs( x= 'Cell Index',
+        y='Cell UMI counts',
+        title = "PBMMC_1: Before Normalization" ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size=20, color = 'red')
+  )
+
+p_before_nom
+
+```
+
+* Above plot shows the UMI counts/cell (transcript molecules) for 500 cell from the PBMMC_1 sample
+* UMI counts fluctuate
+* We derive biological insights downstream by comparing cells against each other.
+* But the UMI counts differences makes it harder to compare cells.
+
+* Why total transcript molecules (UMI counts) detected between cells differ?
+  * Biological:
+    * Cell sub type differences, like size and transcription activity etc.
+  * Technical: scRNA data is inherently noisy
+    * Low mRNA content per cell
+    * cell-to-cell differences in mRNA capture efficiency
+    * Variable sequencing depth
+    * PCR amplification efficiency
+
+* A normalization technique makes the UMI counts distribution uniform, so that each cell has similar counts.
+* Normalization is a critical step that corrects cell-to-cell technical differences.
+* By normalizing, downstream comparisons of relative expression between cells are valid.
+
+
+## Normalization strategies
+
+The sparse nature of scRNA data makes normalization difficult, unlike bulk RNAseq data.
+
+* Broadly two classes
+  1. Spike-in methods
+    * Uses pike-in controls for normalisation
+    * Not available for droplet based scRNA techniques like 10x.
+  2.  Non-spike-in methods: 
+    * Using available counts data for normalization
+    * DEseq2
+    * edgeR - TMM
+    * Library size normalization
+    * deconvolution
+    * sctransform 
+    
+* Typical normalization has two steps
+  1. scaling
+    * Estimate size or scaling or normalization factor: computation of a cell-specific 'scaling' or 'size' factor or “normalization factor” that represents the relative bias in
+that cell and division of all counts for the cell by that factor to remove that
+bias. Assumption: any cell specific bias will affect genes the same way.
+    * Scale the data by dividing the count for each gene with the appropriate size factor for that cell
+  2. Transformation
+    * log2
+    * Square root transformation
+    * Pearson residuals (eg. sctransform)
+    
+
+Scaling methods typically generate normalised counts-per-million (CPM) or
+transcripts-per-million (TPM) values that address the effect of sequencing
+depth. These values however typically have a variance that increases with their
+mean (heteroscedasticity) while most statistical methods assume a stable
+variance, which does not vary with the mean (homoscedasticity). A widely used
+'variance stabilising transformation' is the log transformation (often log2).
+This works well for highly expressed genes (as in bulk RNA-seq) but less so for
+sparse scRNA-seq data.
+
+
+![DESeq,edgeR and Library size normalizations](./Images/size_factors_plot.png)
+* DEseq, edgeR-TMM and Library size normalization initially developed for bulk RNAseq
+* Applying these methods on scRNAseq data systematically under or over estimate size factors. i.e systematically deviate from true size factors.
+* This deviation is the result of removing zeroes prior to normalization. 
+* Therefore other normalization methods specific to scRNAseq data like deconvolution, sctransform etc. were proposed.
+ 
+
+## Deconvolution
+
+Because single-cell data tend to have a substantial number of low and zero counts, these bulk normalization methods may be problematic for single-cell data. 
+
+* Deconvolution aims to normalize expression values based on summed values from pools of cells.
+* Since cell summation results in fewer zeros, the ensuing normalization is less susceptible to errors than existing methods. 
+* The estimated size factors are only relevant to the pools of cells, even though normalization accuracy has improved. 
+* Each pool's size factor is deconvolved into its constituent cells' size factors.
+
+
+![](Images/scran_Fig3.png){width=70%}
+
+In order to avoid pooling cells with radically different transcriptomic
+profiles, the cells are first clustered based on gene expression. The pools are
+then formed exclusively with each cluster. Size factors are calculated within
+each cluster and are then scaled so they are comparable across clusters.
+
+### Cluster cells
+
+The table below show the number and size of clusters found:
+
+```{r quick_cluster}
+set.seed(100)
+clust <- quickCluster(sce, BPPARAM=bpp)
+table(clust)
+```
+
+### Compute size factors
+
+```{r calculate_sum_factors}
+sce <- computePooledFactors(sce,
+			 clusters = clust,
+			 min.mean = 0.1,
+			 BPPARAM = bpp)
+deconv.sf <- sizeFactors(sce)
+summary(deconv.sf)
+```
+
+Note: *min.mean* - A numeric scalar specifying the minimum (library
+size-adjusted) average count of genes to be used for normalization. This means
+large numbers of very lowly expressed genes will not bias the normalization.
+
+Plot deconvolution size factors against library size factors:
+
+```{r deconvolution_norm_v_library_size}
+lib.sf <- librarySizeFactors(sce)
+data.frame(LibrarySizeFactors = lib.sf, 
+           DeconvolutionSizeFactors = deconv.sf,
+			     SampleGroup = sce$SampleGroup) %>%
+  ggplot(aes(x=LibrarySizeFactors, y=DeconvolutionSizeFactors)) +
+      geom_point(aes(col=SampleGroup)) +
+      geom_abline(slope = 1, intercept = 0)
+```
+
+### Apply size factors
+
+For each cell, raw counts for genes are divided by the size factor for that cell
+and log-transformed so downstream analyses focus on genes with strong relative
+differences. We use `scater::logNormCounts()`.
+
+```{r log_norm_counts}
+sce <- logNormCounts(sce)
+assayNames(sce)
+```
+
+### Explore the effect of normalisation
+
+
+Normalised counts are much less variable across cells than raw counts
+
+```{r check_results1}
+norm_counts <- logNormCounts(sce,transform='none' ) %>% 
+  assay('normcounts') %>% 
+  as.matrix() %>% 
+  colSums()
+norm_counts <- tibble(Barcode=names(norm_counts),
+                      normCounts = log2(norm_counts)
+                      )
+norm_counts <- inner_join(norm_counts, oneSamTab, by='Barcode')
+
+
+p_after_norm <- ggplot(data=norm_counts, aes(x=cell_num, y=normCounts)) +
+  geom_bar(stat = 'identity') +
+  labs( x= 'Cell Index',
+        y='Normalized Cell UMI counts',
+        title = "PBMMC_1:After Normalization" ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size=20, color = 'red')
+  )
+
+p_before_nom + p_after_norm
+```
+
+Let's separate out the scaling normalisation from the log transformation
+
+What do the un-normalised data look like if we log them?
+
+```{r nonorm_transform}
+p_before_norm_log <- ggplot(data=oneSamTab, aes(x=cell_num, y=log2(sum))) +
+  geom_bar(stat = 'identity') +
+  labs( x= 'Cell Index',
+        y='Cell UMI counts',
+        title = "Logged raw counts" ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size=20, color = 'red')
+  )
+
+p_before_norm_log + p_after_norm
+```
+
+Simply logging the sum of counts per cell reduces the variation a lot, but the scaling is required to do the job properly
+
+The log transformation is meant to reduce the correlation between mean and variance 
+for genes - has this worked?
+
+We can look at the relationship between the mean gene expression and variance
+for raw UMI counts, scaled counts and scaled, logged counts
+
+For raw counts: 
+```{r mean_var_raw}
+# mean and variance for raw counts
+mean <- rowMeans(assay(sce, "counts"))
+var <- rowVars(assay(sce, "counts"))
+
+# Scatter plot
+plot(log(mean), log(var))
+abline(a=1, b=1, col="red")
+```
+
+There is a strong linear relationship between mean and variance of UMI counts across genes
+
+For scaled counts:
+
+```{r mean_var_scaled}
+# Mean and variance for scaled counts
+mean_scaled <- logNormCounts(sce,transform='none' ) %>% 
+  assay('normcounts') %>% 
+  rowMeans()
+var_scaled <- logNormCounts(sce,transform='none' ) %>% 
+  assay('normcounts') %>% 
+  rowVars()
+
+plot(log(mean_scaled), log(var_scaled))
+abline(a=1, b=1, col="red")
+```
+
+The relationship is still there after scaling the counts
+
+For scaled, log transformed counts:
+```{r mean_var_norm}
+# Mean and variance for scaled, log transformed counts
+mean_norm <- rowMeans(assay(sce, "logcounts"))
+var_norm <- rowVars(assay(sce, "logcounts"))
+
+plot(mean_norm, var_norm)
+abline(a=1, b=1, col="red")
+```
+
+We see that the log transformation removes a large part of the relationship between
+mean and variance for gene expression values
+
+## Save the normalised object
+
+```{r save_normalised, eval=FALSE}
+saveRDS(sce, "results/caron_normalised.rds")
+```
+
+
+## Exercise
+
+Apply the deconvolution normalisation on a single sample: ETV6-RUNX1_1.
+
+You will first load the a single cell experiment object containing the entire 
+Caron data set. First it is necessary to select only cells that came from the sample 
+'ETV6-RUNX1_1'. You can then apply the normalization by deconvolution by clustering the cells, computing size factors and using these to log-normalize the counts.
+
+# sctransform: Variant Stabilising Transformation
+
+With scaling normalisation a correlation remains between the mean and variation
+of expression (heteroskedasticity). This affects downstream dimensionality
+reduction as the few main new dimensions are usually correlated with library
+size. `sctransform` addresses the issue by regressing library size out of raw
+counts and providing residuals to use as normalized and variance-stabilized
+expression values in some downstream analyses, such as dimensionality reduction.
+
+!["Effect of scaling normalization"](Images/total_UMI_counts_vs_gene_UMI_counts.png)
+
+The `sctransform` package is from the Seurat suite of scRNAseq analysis
+packages. Rather than convert our Single Cell Experiment object into a Seurat
+object and use the `Seurat` package's command `SCTransform`, we will extract the
+counts matrix from our SCE object and run the variance stabilising
+transformation (VST) algorithm, using the `sctranform` package's `vst` command,
+directly on the matrix. We can extract the counts matrix - as a *dgCMatrix*
+object sparse matrix - using the `counts` function.
+
+```{r extract_counts}
+counts <- counts(sce)
+class(counts)
+```
+
+## Rationale
+
+In order to demonstrate the rationale behind the using the variance stabilising
+transformation, we will visually inspect various properties of our data. Our
+main interest is in the general trends not in individual outliers. Neither genes
+nor cells that stand out are important at this step; we focus on the global
+trends.
+
+### Derive gene and cell attributes from the UMI matrix
+
+#### Gene attributes
+
+Gene attributes include for each gene:
+
+* mean UMI count across cells
+* number of cells where the gene is detected
+* variance of UMI counts across cells
+* the mean and variance above on the log10 scale
+
+```{r gene_attributes}
+gene_attr <- data.frame(mean = rowMeans(counts), 
+                        detection_rate = rowMeans(counts > 0),
+                        var = rowVars(counts)) %>% 
+  mutate(log_mean = log10(mean)) %>% 
+  mutate(log_var = log10(var))
+
+dim(gene_attr)
+head(gene_attr)
+```
+
+#### Cell attributes
+
+Attributes include for each cell:
+
+* total UMI count across genes (library size)
+* number of genes detected (with at least 1 UMI)
+
+```{r cell_attributes}
+cell_attr <- data.frame(n_umi = colSums(counts),
+                        n_gene = colSums(counts > 0))
+
+dim(cell_attr)
+head(cell_attr)
+```
+
+### Mean-variance relationship
+
+For the genes, on the log10 scale we can see that up to a mean UMI count of 0
+the variance follows the line through the origin with slope one, i.e. variance
+and mean are roughly equal as expected under a Poisson model. However, genes
+with a higher average UMI count show overdispersion compared to Poisson.
+
+```{r overdispersion_plot, fig.align='center', fig.width=6, fig.height=6}
+ggplot(gene_attr, aes(log_mean, log_var)) + 
+  geom_point(alpha=0.3, shape=16) +
+  geom_abline(intercept = 0, slope = 1, color='red')
+```
+
+### Mean-detection-rate relationship
+
+In line with the previous plot, we see a lower than expected detection rate in
+the medium expression range. However, for the highly expressed genes, the rate
+is at or very close to 1.0 suggesting that there is no zero-inflation in the
+counts for those genes and that zero-inflation is a result of overdispersion,
+rather than an independent systematic bias.
+
+```{r detection_rate_plot, fig.align='center', fig.width=6, fig.height=6}
+x = seq(from = -3, to = 2, length.out = 1000)
+poisson_model <- data.frame(log_mean = x,
+			    detection_rate = 1 - dpois(0, lambda = 10^x))
+
+ggplot(gene_attr, aes(log_mean, detection_rate)) + 
+  geom_point(alpha=0.3, shape=16) + 
+  geom_line(data=poisson_model, color='red') +
+  theme_gray(base_size = 8)
+```
+
+### Cell attributes
+
+The plot below shows the relationship between the two cell attributes computed:
+library size (n_umi) and number of genes detected (n_gene).
+
+```{r n_gene_v_n_umi_plot}
+ggplot(cell_attr, aes(n_umi, n_gene)) + 
+  geom_point(alpha=0.3, shape=16) + 
+  geom_density_2d(size = 0.3)
+```
+
+## Method
+
+From the
+[sctransform vignette](https://htmlpreview.github.io/?https://github.com/satijalab/sctransform/blob/supp_html/supplement/variance_stabilizing_transformation.html):
+"Based on the observations above, which are not unique to this particular data
+set, we propose to model the expression of each gene as a negative binomial
+random variable with a mean that depends on other variables. Here the other
+variables can be used to model the differences in sequencing depth between
+cells and are used as independent variables in a regression model. In order to 
+avoid overfitting, we will first fit model parameters per gene, and then use
+the relationship between gene mean and parameter values to fit parameters,
+thereby combining information across genes. Given the fitted model parameters,
+we transform each observed UMI count into a Pearson residual which can be
+interpreted as the number of standard deviations an observed count was away
+from the expected mean. If the model accurately describes the mean-variance
+relationship and the dependency of mean and latent factors, then the result
+should have mean zero and a stable variance across the range of expression."
+
+
+In short:
+
+* expression of a gene is modeled by a negative binomial random variable with
+a mean that depends on library size
+* library size is used as the independent variable in a regression model
+* the model is fit for each gene, then combined data across genes is used to fit
+parameters
+* convert UMI counts to residuals akin to the number of standard deviations
+away from the expected mean.
+
+Assumptions:
+
+* accurate model of the mean-variance relationship
+* accurate model of the dependency of mean and latent factors
+
+Outcome:
+
+* the mean of the transformed data (residuals) is zero
+* stable variance across expression range
+
+## Application
+
+### Estimation and transformation
+
+We will now estimate model parameters and transform data.
+
+The `vst` function estimates model parameters and performs the variance
+stabilizing transformation.
+
+Here we use the log10 of the total UMI counts of a cell as variable for
+sequencing depth for each cell. After data transformation we plot the model
+parameters as a function of gene mean (geometric mean). We will set the following
+arguments:
+
+* `umi` - The matrix of UMI counts with genes as rows and cells as columns  
+* `latent_var` - The independent variables to regress out as a character vector  
+* `return_gene_attr` - Make cell attributes part of the output  
+* `return_cell_attr` - Calculate gene attributes and make part of output  
+
+```{r sctransform_vst, eval=FALSE}
+set.seed(44)
+vst_out <- vst(umi = counts,
+               latent_var = c('log_umi'),
+               return_gene_attr = TRUE,
+               return_cell_attr = TRUE
+               
+  )
+```
+
+```{r sctransform_vst_run, echo=FALSE, message=FALSE, warning=FALSE}
+set.seed(44)
+vst_out <- vst(umi = counts,
+               latent_var = c('log_umi'),
+               return_gene_attr = TRUE,
+               return_cell_attr = TRUE,
+               verbosity = 0
+  )
+```
+
+### Parameter plots
+
+We will generate some diagnostic plots in order to inspect the estimated and
+fitted model parameters.
+
+By default parameters shown are:  
+
+* intercept  
+* latent variables, here log_umi  
+* overdispersion factor (od_factor)  
+
+```{r sctransform_vst_plot, eval=FALSE}
+plot_model_pars(vst_out)
+```
+
+```{r sctransform_vst_plot_run, echo=FALSE, fig.width=12, fig.height=5}
+plot_model_pars(vst_out, verbosity = 1)
+```
+
+We check the regression model used is the one the we intended:
+
+```{r show_sctransform_model}
+vst_out$model_str
+```
+
+We will now look at several genes in more detail by plotting observed UMI counts
+and comparing these to plots using the residuals from the modelling.
+
+For each gene of interest, we will plot:
+
+* the observed cell attribute (UMI counts) against the latent variable (library
+size) (by default), with the fitted model as a pink line showing the expected
+UMI counts given the model and a shaded region spanning one standard deviation
+from the expected value.
+* the residuals against the latent variable in the same way.
+
+We will look at two genes: 'RPL10' and 'HBB':
+
+```{r goi_tab, echo=FALSE}
+rowData(sce) %>%
+	as.data.frame %>%
+	filter(Symbol %in% c('RPL10', 'HBB')) %>%
+  select(ID, Symbol, Type, Chromosome)
+```
+
+```{r vst_model_plot, fig.align='center', fig.width=8, fig.height=8}
+ensId <- rowData(sce) %>%
+	as.data.frame %>%
+	filter(Symbol %in% c('RPL10', 'HBB')) %>%
+  pull("ID")
+
+plot_model(x = vst_out,
+           umi = counts,
+           goi = ensId,
+           plot_residual = TRUE)
+```
+
+### Overall properties of transformed data
+
+The distribution of residual mean is centered around 0:
+
+```{r residual_mean_histogram}
+ggplot(vst_out$gene_attr, aes(x = residual_mean)) +
+	geom_histogram(binwidth=0.01)
+```
+
+The distribution of residual variance is centered around 1:
+
+```{r residual_variance_histogram}
+ggplot(vst_out$gene_attr, aes(residual_variance)) +
+	geom_histogram(binwidth=0.1) +
+	geom_vline(xintercept=1, color='red') +
+	xlim(0, 10)
+```
+
+Plotting the residual variance against the mean shows that after transformation
+there is no relationship between gene mean and variance.
+
+```{r residual_variance_v_mean_plot}
+ggplot(vst_out$gene_attr, aes(x = log10(gmean), y = residual_variance)) +
+       geom_point(alpha=0.3, shape=16)
+```
+
+Check genes with large residual variance. These genes would be markers of
+expected cell populations. Note how they represent a great range of mean UMI and
+detection rate values.
+
+```{r top_genes_residual_var}
+vst_out$gene_attr %>%
+  arrange(desc(residual_variance)) %>% 
+	top_n(n = 10) %>%
+	mutate(across(where(is.numeric), round, 2)) %>% 
+  rownames_to_column("ID") %>%
+  left_join(as.data.frame(rowData(sce))[,c("ID", "Symbol")], "ID")
+```
+
+## Storage of the VST transformed data in the SCE object
+
+In order to store the transformed values in our Single Cell object, we need to
+add them as a new "assay". The transformed values are kept as a matrix in the
+`y` object within `vst_out`.
+
+Note that, by default, genes that are expressed in fewer than 5 cells are not
+used by `vst` and results for these genes are not returned, so to add
+`vst_out$y` as an assay in our single cell object we may need to subset the rows
+of our `sce` object to match the rows of `vst_out$y`. In our case, about 10,000
+genes were expressed in less than 5 cells, so we will need to subset our SCE 
+object before adding the VST normalised counts.
+
+```{r add_vst_to_sce}
+keepGenes <- rownames(sce)%in%rownames(vst_out$y)
+sce <- sce[keepGenes,]
+vstMat <- as(vst_out$y[rownames(sce),], "dgCMatrix")
+
+assay(sce, "sctrans_norm", withDimnames=FALSE) <- vstMat
+```
+
+## Exercise
+
+Using a single sample - ETV6-RUNX1_1 - inspect the mean-variance relationship
+and apply sctransform to that data.
+
+# Session information
+
+<!--<details>-->
+```{r session_info}
+sessionInfo()
+```
+<!--</details>-->
