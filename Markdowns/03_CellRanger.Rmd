@@ -364,13 +364,13 @@ files/directories that will not be of immediate interest.
 The contents of the sample directory will look like this:
 
 ```{r outputDir, fig.align='center', out.width="50%"}
-knitr::include_graphics("Images/CellRangerOutput.png")
+knitr::include_graphics("../Images/CellRangerOutput.png")
 ```
 
 The contents of the `outs` directory are:
 
 ```{r outputDirOuts, fig.align='center', out.width="50%"}
-knitr::include_graphics("Images/CellRangerOutputOuts.png")
+knitr::include_graphics("../Images/CellRangerOutputOuts.png")
 ```
 
 * **analysis** - The results of clustering and differential expression analysis
@@ -427,7 +427,7 @@ visualization and analysis platform that allows you to extensively explore your
 data with a point and click interface.
 
 ```{r LoupeBrowser, fig.align='center', out.width="75%"}
-knitr::include_graphics("Images/LoupeBrowser.png")
+knitr::include_graphics("../Images/LoupeBrowser.png")
 ```
 
 The browser will allow you, for example, to find cells of interest through
@@ -488,7 +488,7 @@ on [the 10x Cell Ranger pages](https://support.10xgenomics.com/single-cell-gene-
 The plot below shows a "barcode rank plot". This is taken from the Cell Ranger
 `web_summary.html` report.
 
-![](Images/BarcodeRankPlot.png){width=50%}
+![](../Images/BarcodeRankPlot.png){width=50%}
 
 This plot shows the UMI counts for all droplets, the droplets have been ranked
 by UMI count and coloured according to whether they have been called as cells or
