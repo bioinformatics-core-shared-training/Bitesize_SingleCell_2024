@@ -687,7 +687,9 @@ cellranger mkref \
 <p>If we save this script in our <code>scripts</code> folder as
 <code>01-prepare_reference.sh</code>, we could then run it from the
 terminal with:</p>
-<pre class="console"><code>$ bash 01_prepare_reference.sh</code></pre>
+<pre class="console"><code># start interactive job
+$ sintr -c 7 --mem=8G -t 01:00:00 --reservation=chilam01_101
+$ bash 01_prepare_reference.sh</code></pre>
 </details>
 </div>
 </div>

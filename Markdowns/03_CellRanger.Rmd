@@ -219,6 +219,8 @@ If we save this script in our `scripts` folder as `01-prepare_reference.sh`, we
 could then run it from the terminal with:
 
 ```console
+# start interactive job
+$ sintr -c 7 --mem=8G -t 01:00:00 --reservation=chilam01_101
 $ bash 01_prepare_reference.sh
 ```
 
