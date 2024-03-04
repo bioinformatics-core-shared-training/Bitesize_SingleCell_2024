@@ -70,8 +70,17 @@ references.
 
 ## Installing Cell Ranger
 
+[Download Cell Ranger](https://www.10xgenomics.com/support/software/cell-ranger/downloads#reference-downloads) from 10xgenomics website.
+
 Cell Ranger runs on Linux, and full installation instructions can be found on the 
-[10x website](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/installation).
+[10x website](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/tutorial_in).
+
+Alternatively we have downloded cell ranger for you and placed in Software folder.
+
+The cellrange execulable is in Software/cellranger-7.2.0/bin and to run cellranger do the following.
+
+Software/cellranger-7.2.0/bin/cellranger
+
 
 ## Cell Ranger references
 
