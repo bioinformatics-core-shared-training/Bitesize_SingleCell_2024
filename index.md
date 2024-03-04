@@ -9,8 +9,8 @@
 * Abbi Edwards - Bioinformatics Core, Cancer Research UK Cambridge Institute
 * Ashley Sawle - Bioinformatics Core, Cancer Research UK Cambridge Institute
 * Chandra Chilamakuri - Bioinformatics Core, Cancer Research UK Cambridge Institute
+* Jason Skelton - Genomics Core, Cancer Research UK Cambridge Institute
 * Kamal Kishore - Bioinformatics Core, Cancer Research UK Cambridge Institute
-* Katarzyna Kania - Genomics Core, Cancer Research UK Cambridge Institute
 * Matthew Eldridge - Bioinformatics Core, Cancer Research UK Cambridge Institute
 
 
@@ -27,9 +27,6 @@ marker genes, as well as differential expression and abundance analyses.
 You will also learn how to generate common plots for analysis and visualisation
 of gene expression data, such as TSNE, UMAP and violin plots.
 
-This is the first time we are running this course in the bitesize format.
-Please bear with us if there are any technical hitches; there 
-may be some necessity to make adjustments to the course as we go but we will try our best to keep to time.
 
 (Materials linked to below will be updated closer to the time of delivery)
 
@@ -45,46 +42,38 @@ may be some necessity to make adjustments to the course as we go but we will try
 > We recommend our [Introduction to R course](https://bioinformatics-core-shared-training.github.io/r-intro/)
 > You will also need a CI cluster account and be familiar with its use.
 
-## Data sets
+## Data
 
-Two data sets:
-
-* '[CaronBourque2020](https://www.nature.com/articles/s41598-020-64929-x)': pediatric leukemia, with four sample types, including:
+* The course data is based on '[CaronBourque2020](https://www.nature.com/articles/s41598-020-64929-x)'
+  relating to pediatric leukemia, with four sample types, including:
   * pediatric Bone Marrow Mononuclear Cells (PBMMCs)
   * three tumour types: ETV6-RUNX1, HHD, PRE-T  
-* ['HCA': adult BMMCs](https://data.humancellatlas.org/explore/projects/cc95ff89-2e68-4a08-a234-480eca21ce79) (ABMMCs) obtained from the Human Cell Atlas (HCA)
-  * (here downsampled from 25000 to 5000 cells per sample)
-  
+* The data used in the course can be [downloaded from Dropbox](https://www.dropbox.com/sh/qwxgat50tsg8m3r/AAAzQd5WXuEBGOFl3m4f5B1La?dl=1) (the file is 4.2GB compressed and XXGB when uncompressed, so make sure you have enough space on your computer). Please note that:
+  * these data have been processed for teaching purposes and are therefore not suitable for research use;
+  * all the data is provided on our training machines, you don't need to download it to attend the course.
+
+
 ## How will it work?
 
-Each week there will be a taught Tuesday session (11.30am-1pm) and a Friday clinic (2-3pm). Calendar invites for these meetings (on teams) should have been sent to your CRUK email address. Each session will be recorded and you will be able to access it at anytime.
+Each week there will be a taught Tuesday session (1:00-3:30 pm) in the room 009 and a Friday clinic online session (2-3pm). Calendar invites for these meetings (on teams) should have been sent to your CRUK email address. 
 
 It is assumed you will try the exercises between the two sessions. At the clinic the speaker will go through the exercises and answer any questions. During the week you can also ask questions at anytime to your designated member of the bioinformatics core. You should have had an email identifying who this but if you are unsure please contact `analysisteam-bioinformatics@cruk.cam.ac.uk`.
   
-## Course etiquette
-
-As this course will be taught over teams we thought it would be a good idea to have a few simple rules.
-
-Tuesday Session
-
-1. Please mute your microphone, you do not need your camera on but it is your choice.
-
-2. If you have questions you can put them in the chat but in the interests of time and covering the material the speaker may choose to answer them at the end. You can also direct them to your designated member of the bioinformatics core. 
-
-3. The session will be recorded for you so there is no need to try to do this yourself.
 
 ## Schedule
 
 ### Week 1
 
-* Introduction to Single Cell Methods - Katarzyna Kania
+* Introduction to Single Cell Methods - Jason Skelton
   + [Slides](Slides/01_Introduction.pdf)
-  
-* Alignment and cell counting with Cellranger - Ashley Sawle
+* Preamble: data set and workflow - Chandra Chilamakuri
+  + [Slides](Slides/02_PreambleSlides.html)
+* Alignment and cell counting with Cellranger - Chandra Chilamakuri
   + [Slides](Slides/03_CellRangerSlides.html) \([pdf](Slides/03_CellRangerSlides.pdf)\)
   + [Practical](Markdowns/03_CellRanger.html)
-  + [Recording](https://crukci-my.sharepoint.com/:v:/g/personal/ashley_sawle_cruk_cam_ac_uk/EeLnF5YIBbBMkOR4zvjGJ7oBmoFt5X-R7FcXrHtqwzIviQ?e=ur8IxS)
 
+
+<!--
 
 ### Week 2 
 
@@ -144,7 +133,10 @@ Tuesday Session
   + [Recording](https://crukci-my.sharepoint.com/:v:/g/personal/ashley_sawle_cruk_cam_ac_uk/EZqnSAU9l-pLuJREdqAVGFcBirwfR2rvTcauB4VrbNMpOg?e=dNlOCK)
   + [Bulk RNASeq Analysis Course materials](https://bioinformatics-core-shared-training.github.io/Bulk_RNAseq_Course_Apr22/)
   + [Recording of clinic](https://crukci-my.sharepoint.com/:v:/g/personal/ashley_sawle_cruk_cam_ac_uk/EbQNBtxgUP9AvBAGUC8WSrQBB67vNcuxJtTyAt9sGoPfWA?e=65hLg4)
-
+  
+  
+  
+-->
 ## Additional Resources
 
 * [Bioconductor for relevant R packages](https://bioconductor.org/)
