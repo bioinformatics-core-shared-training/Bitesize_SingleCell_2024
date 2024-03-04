@@ -96,13 +96,15 @@ The cell ranger executable is in `Software/cellranger-7.2.0/bin` and to run cell
   * Use `--reservation=chilam01_101` flag in your `sbatch` command.
   * Steps ...
     1. login to cluster e.g.: your `cluster user name@clust1-headnode-1.cri.camres.org`. If you do not have cluster user name ask us.
-    2. Then start slurm  interactive login : `sintr -c 8 --mem=4G -t 01:00:00 --reservation=chilam01_101 `
+    2. Then start slurm  interactive login : `srun -c 8 --mem=4G -t 01:00:00 --reservation=chilam01_101 --pty bash -I`
       * Where ...
-        * sintr: slurm command for interactive job
+        * srun: submit a job for execution in real time
         * -c: number of threads
         * --mem: memory
         * -t: Set a limit on the total run time of the job allocation
         * --reservation: Reservation name to use
+        * --pty: Execute task zero with pseudo terminal mode
+        * -I: exit if resources are not available
     3. Once you have initiated an interactive job, you can run any command of interest and those commands will be executed on chilam01_101
     
     * Alternatively if you want to run the the commands using script than you must use `--reservation=chilam01_101` in the sbatch script.
@@ -220,7 +222,7 @@ could then run it from the terminal with:
 
 ```console
 # start interactive job
-$ sintr -c 7 --mem=8G -t 01:00:00 --reservation=chilam01_101
+$ srun -c 7 --mem=8G -t 01:00:00 --reservation=chilam01_101 --pty bash -I
 $ bash 01_prepare_reference.sh
 ```
 
