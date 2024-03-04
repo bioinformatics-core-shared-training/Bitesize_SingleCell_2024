@@ -75,13 +75,39 @@ references.
 Cell Ranger runs on Linux, and full installation instructions can be found on the 
 [10x website](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/tutorial_in).
 
-Alternatively we have downloded cell ranger for you and placed in Software folder.
+Alternatively we have downloaded cell ranger for you and placed in Software folder.
 
-The cellrange execulable is in Software/cellranger-7.2.0/bin and to run cellranger do the following.
+The cell ranger executable is in `Software/cellranger-7.2.0/bin` and to run cell ranger do the following.
 
-Software/cellranger-7.2.0/bin/cellranger
+`Software/cellranger-7.2.0/bin/cellranger`
 
 
+## A note regarding the execution of jobs on a cluster
+
+  * `Do NOT run jobs on head node (login node)`. 
+  * In general, once you have logged into the cluster, you will land on the head node. Next, you execute commands or scripts using the job manager, CI cluster uses a job manager called [slurm](https://slurm.schedmd.com/documentation.html)
+  * Interested in learning more about Slurm Job Manager? The university offers a one-day course on the topic. [HPC course materials](https://cambiotraining.github.io/hpc-intro/materials/03-slurm.html)
+  
+  * For this course IT has crated a separate resorvation called `chilam01_101` to play and learn.
+  * It will be active from 4 March to 19 April 2024.
+  * For all computing activities in this course, you must use this reservation. 
+
+* How to use `chilam01_101` reservation for executing jobs?
+  * Use `--reservation=chilam01_101` flag in your `sbatch` command.
+  * Steps ...
+    1. login to cluster e.g.: your `cluster user name@clust1-headnode-1.cri.camres.org`. If you do not have cluster user name ask us.
+    2. Then start slurm  interactive login : `sintr -c 8 --mem=4G -t 01:00:00 --reservation=chilam01_101 `
+      * Where ...
+        * sintr: slurm command for interactive job
+        * -c: number of threads
+        * --mem: memory
+        * -t: Set a limit on the total run time of the job allocation
+        * --reservation: Reservation name to use
+    3. Once you have initiated an interactive job, you can run any command of interest and those commands will be executed on chilam01_101
+    
+    * Alternatively if you want to run the the commands using script than you must use `--reservation=chilam01_101` in the sbatch script.
+    
+  
 ## Cell Ranger references
 
 Cell Ranger, like other aligners, requires the information about
@@ -115,6 +141,7 @@ You can find these reference files in the directory `Data/references`.
 
 To index our genome, we can use the `cellranger mkref` tool with the following
 arguments (replacing `{...}` with the relevant piece of information):
+
 
 ```bash
 cellranger mkref \

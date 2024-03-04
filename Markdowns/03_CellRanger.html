@@ -432,12 +432,14 @@ Ranger</h3>
 brief</a>
 <ul>
 <li><a href="#installing-cell-ranger" id="toc-installing-cell-ranger"><span class="toc-section-number">2.1</span> Installing Cell Ranger</a></li>
-<li><a href="#cell-ranger-references" id="toc-cell-ranger-references"><span class="toc-section-number">2.2</span> Cell Ranger references</a></li>
-<li><a href="#cell-ranger-count" id="toc-cell-ranger-count"><span class="toc-section-number">2.3</span> Cell Ranger <code>count</code></a>
+<li><a href="#a-note-regarding-the-execution-of-jobs-on-a-cluster" id="toc-a-note-regarding-the-execution-of-jobs-on-a-cluster"><span class="toc-section-number">2.2</span> A note regarding the execution of
+jobs on a cluster</a></li>
+<li><a href="#cell-ranger-references" id="toc-cell-ranger-references"><span class="toc-section-number">2.3</span> Cell Ranger references</a></li>
+<li><a href="#cell-ranger-count" id="toc-cell-ranger-count"><span class="toc-section-number">2.4</span> Cell Ranger <code>count</code></a>
 <ul>
-<li><a href="#preparing-the-raw-fastq-files" id="toc-preparing-the-raw-fastq-files"><span class="toc-section-number">2.3.1</span> Preparing the raw fastq
+<li><a href="#preparing-the-raw-fastq-files" id="toc-preparing-the-raw-fastq-files"><span class="toc-section-number">2.4.1</span> Preparing the raw fastq
 files</a></li>
-<li><a href="#running-cellranger-count" id="toc-running-cellranger-count"><span class="toc-section-number">2.3.2</span> Running
+<li><a href="#running-cellranger-count" id="toc-running-cellranger-count"><span class="toc-section-number">2.4.2</span> Running
 <code>cellranger count</code></a></li>
 </ul></li>
 </ul></li>
@@ -524,14 +526,66 @@ Cell Ranger</a> from 10xgenomics website.</p>
 <p>Cell Ranger runs on Linux, and full installation instructions can be
 found on the <a href="https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/tutorial_in">10x
 website</a>.</p>
-<p>Alternatively we have downloded cell ranger for you and placed in
+<p>Alternatively we have downloaded cell ranger for you and placed in
 Software folder.</p>
-<p>The cellrange execulable is in Software/cellranger-7.2.0/bin and to
-run cellranger do the following.</p>
-<p>Software/cellranger-7.2.0/bin/cellranger</p>
+<p>The cell ranger executable is in
+<code>Software/cellranger-7.2.0/bin</code> and to run cell ranger do the
+following.</p>
+<p><code>Software/cellranger-7.2.0/bin/cellranger</code></p>
 </div>
-<div id="cell-ranger-references" class="section level2" number="2.2">
-<h2><span class="header-section-number">2.2</span> Cell Ranger
+<div id="a-note-regarding-the-execution-of-jobs-on-a-cluster" class="section level2" number="2.2">
+<h2><span class="header-section-number">2.2</span> A note regarding the
+execution of jobs on a cluster</h2>
+<ul>
+<li><p><code>Do NOT run jobs on head node (login node)</code>.</p></li>
+<li><p>In general, once you have logged into the cluster, you will land
+on the head node. Next, you execute commands or scripts using the job
+manager, CI cluster uses a job manager called <a href="https://slurm.schedmd.com/documentation.html">slurm</a></p></li>
+<li><p>Interested in learning more about Slurm Job Manager? The
+university offers a one-day course on the topic. <a href="https://cambiotraining.github.io/hpc-intro/materials/03-slurm.html">HPC
+course materials</a></p></li>
+<li><p>For this course IT has crated a separate resorvation called
+<code>chilam01_101</code> to play and learn.</p></li>
+<li><p>It will be active from 4 March to 19 April 2024.</p></li>
+<li><p>For all computing activities in this course, you must use this
+reservation.</p></li>
+<li><p>How to use <code>chilam01_101</code> reservation for executing
+jobs?</p>
+<ul>
+<li>Use <code>--reservation=chilam01_101</code> flag in your
+<code>sbatch</code> command.</li>
+<li>Steps …
+<ol style="list-style-type: decimal">
+<li>login to cluster e.g.: your
+<code>cluster user name@clust1-headnode-1.cri.camres.org</code>. If you
+do not have cluster user name ask us.</li>
+<li>Then start slurm interactive login :
+<code>sintr -c 8 --mem=4G -t 01:00:00 --reservation=chilam01_101</code></li>
+</ol>
+<ul>
+<li>Where …
+<ul>
+<li>sintr: slurm command for interactive job</li>
+<li>-c: number of threads</li>
+<li>–mem: memory</li>
+<li>-t: Set a limit on the total run time of the job allocation</li>
+<li>–reservation: Reservation name to use</li>
+</ul></li>
+</ul>
+<ol start="3" style="list-style-type: decimal">
+<li>Once you have initiated an interactive job, you can run any command
+of interest and those commands will be executed on chilam01_101</li>
+</ol>
+<ul>
+<li>Alternatively if you want to run the the commands using script than
+you must use <code>--reservation=chilam01_101</code> in the sbatch
+script.</li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="cell-ranger-references" class="section level2" number="2.3">
+<h2><span class="header-section-number">2.3</span> Cell Ranger
 references</h2>
 <p>Cell Ranger, like other aligners, requires the information about the
 genome and transcriptome of interest to be provided in a specific
@@ -637,15 +691,15 @@ terminal with:</p>
 </details>
 </div>
 </div>
-<div id="cell-ranger-count" class="section level2" number="2.3">
-<h2><span class="header-section-number">2.3</span> Cell Ranger
+<div id="cell-ranger-count" class="section level2" number="2.4">
+<h2><span class="header-section-number">2.4</span> Cell Ranger
 <code>count</code></h2>
 <p>Full details for running the <code>cellranger count</code> tool can
 be found on the <a href="https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count">10x
 website</a>. Here, we go through a typical analysis workflow with this
 tool.</p>
-<div id="preparing-the-raw-fastq-files" class="section level3" number="2.3.1">
-<h3><span class="header-section-number">2.3.1</span> Preparing the raw
+<div id="preparing-the-raw-fastq-files" class="section level3" number="2.4.1">
+<h3><span class="header-section-number">2.4.1</span> Preparing the raw
 fastq files</h3>
 <p>To run Cell Ranger <code>count</code> the fastq files for samples to
 be processed should be placed in a single directory. Cell Ranger will be
@@ -681,8 +735,8 @@ for Read 1, <strong>R2</strong> for Read 2, and index reads are
     SRR9264343_S0_L001_R1_001.fastq.gz
     SRR9264343_S0_L001_R2_001.fastq.gz</code></pre>
 </div>
-<div id="running-cellranger-count" class="section level3" number="2.3.2">
-<h3><span class="header-section-number">2.3.2</span> Running
+<div id="running-cellranger-count" class="section level3" number="2.4.2">
+<h3><span class="header-section-number">2.4.2</span> Running
 <code>cellranger count</code></h3>
 <p>The minimum information require to run <code>cellranger count</code>
 is:</p>
