@@ -64,8 +64,8 @@ It is assumed you will try the exercises between the two sessions. At the clinic
 
 ### Week 1
 
-* Introduction to Single Cell Methods - Jason Skelton
-  + [Slides](Slides/01_Introduction.pdf)
+* Introduction to Single Cell Methods - Abbi Edwards
+  + [Slides](Slides/IntroSingleCellTech-Bitesize.pdf)
 * Preamble: data set and workflow - Chandra Chilamakuri
   + [Slides](Slides/02_PreambleSlides.html)
 * Alignment and cell counting with Cellranger - Chandra Chilamakuri
