@@ -1,7 +1,7 @@
 ---
 title: "Alignment and feature counting"
-author: "Ashley Sawle"
-date: 'April 2022'
+author: "Ashley Sawle, Chandra Chilamakuri"
+date: 'March 2024'
 output:
   ioslides_presentation:
     widescreen: true
@@ -15,6 +15,19 @@ output:
 ```{r echo=FALSE, out.width='70%', fig.align='center'}
 knitr::include_graphics('Images/workflow2.png')
 ```
+
+## 10x technology overview
+
+* GEM: Gel Bead-In-EMulsion
+* Millions of GEMs
+* Each GEM comes with thousands of oligonucleotide sequences
+* Each oligo sequence has cell barcode + UMI + capture sequence
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/10X_Partition_Overview.png')
+```
+
+
 
 ## 10x library file structure
 
