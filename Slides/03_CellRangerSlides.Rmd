@@ -1,11 +1,12 @@
 ---
 title: "Alignment and feature counting"
 author: "Ashley Sawle, Chandra Chilamakuri"
-date: 'March 2024'
+date: "March 2024"
 output:
+  beamer_presentation: default
   ioslides_presentation:
-    widescreen: true
-    smaller: true
+    widescreen: yes
+    smaller: yes
     logo: Images/CRUK_Cambridge_Institute.png
     css: css/stylesheet.css
 ---
