@@ -1,0 +1,23 @@
+Bootstrap: docker
+From: rocker/rstudio
+
+%environment
+    export BASH_ENV=~/.bashrc
+    export PATH=/opt/miniforge3/bin/:$PATH
+    source /opt/miniforge3/bin/activate R
+
+%files
+    conda_R.yaml /opt
+
+%post
+    apt-get update && \
+    apt-get install -y build-essential curl && \
+    apt-get clean
+
+    curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh" && \
+    bash Miniforge3-Linux-x86_64.sh -b -p /opt/miniforge3 && \
+    rm Miniforge3-Linux-x86_64.sh
+
+    export  PATH=/opt/miniforge3/bin/:$PATH
+
+    mamba env create -f /opt/conda_R.yaml && mamba clean -a

@@ -1,0 +1,28 @@
+name: R
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - r=4.3.1
+  - ca-certificates
+  - openssl
+  - r-devtools
+  - r-dt
+  - r-ggvenn
+  - r-knitr
+  - r-patchwork
+  - r-pheatmap
+  - r-robustbase
+  - r-seurat
+  - r-tidyverse
+  - bioconductor-annotationhub
+  - bioconductor-batchelor
+  - bioconductor-biocparallel
+  - bioconductor-dropletutils
+  - bioconductor-edger
+  - bioconductor-ensembldb
+  - bioconductor-milor
+  - bioconductor-pcatools
+  - bioconductor-scater
+  - bioconductor-scran
