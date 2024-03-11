@@ -58,7 +58,7 @@ to the sample group. The table below shows details of the twelve samples that we
 will be working with.
 
 ```{r samplesheet, message=FALSE}
-samplesheet <- read_tsv("Data/sample_sheet.tsv")
+samplesheet <- read_tsv("sample_sheet.tsv")
 ```
 
 ```{r metadata, echo=FALSE}
@@ -102,7 +102,7 @@ work with the _filtered_ matrix, which only contains droplets called as cells by
 CellRanger.
 
 ```{r load_single_sample}
-sample.path <- "Data/CellRanger_Outputs/SRR9264343/outs/filtered_feature_bc_matrix/"
+sample.path <- "SRR9264343/outs/filtered_feature_bc_matrix/"
 sce.sing <- read10xCounts(sample.path, col.names=TRUE, BPPARAM = bp.params)
 sce.sing
 ```
@@ -311,7 +311,7 @@ be used as the sample names in the Single Cell Experiment object.
 
 ```{r make_file_list}
 samples <- samplesheet$Sample[c(1,5,7,9)]
-list_of_files <- str_c("Data/CellRanger_Outputs/", 
+list_of_files <- str_c("CellRanger_Outputs/CaronBourque2020/", 
                        samples, 
                        "/outs/filtered_feature_bc_matrix")
 names(list_of_files) <- samples
@@ -385,16 +385,21 @@ CellRanger gene annotation was generated.
 
 ```{r annotate_genes}
 ah <- AnnotationHub()
-ens.hs.107<- query(ah, c("Homo sapiens", "EnsDb", 107))[[1]] 
+ens.hs.107 <- query(ah, c("Homo sapiens", "EnsDb", 107))[[1]] 
 
-genes <- rowData(sce)$ID
-gene_annot <- AnnotationDbi::select(ens.hs.107, 
-                                    keys = genes,
-                                    keytype = "GENEID",
-                                    columns = c("GENEID", "SEQNAME")) %>%
-    set_names(c("ID", "Chromosome"))
-rowData(sce) <- merge(rowData(sce), gene_annot, by = "ID", sort=FALSE)
-rownames(rowData(sce)) <- rowData(sce)$ID
+annotations <- genes(ens.hs.107, return.type = "data.frame")  %>%
+  dplyr::select(gene_id, seq_name) %>%
+  dplyr::rename(ID=gene_id)
+
+gene_metadata <- as.data.frame(rowData(sce)) %>%
+  mutate(ID = rownames(.)) %>%
+  left_join(annotations, by = "ID") %>%
+  dplyr::rename(Chromosome=seq_name)
+
+rowData(sce) <- DataFrame(gene_metadata)
+
+rownames(sce) <- uniquifyFeatureNames(rowData(sce)$ID,
+                                      rowData(sce)$Symbol)
 
 rowData(sce)
 ```
