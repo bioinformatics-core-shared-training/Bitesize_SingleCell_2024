@@ -50,7 +50,6 @@ of gene expression data, such as TSNE, UMAP and violin plots.
   * three tumour types: ETV6-RUNX1, HHD, PRE-T  
 * The data used in the course can be [downloaded from Dropbox](https://www.dropbox.com/sh/qwxgat50tsg8m3r/AAAzQd5WXuEBGOFl3m4f5B1La?dl=1) (the file is 4.2GB compressed and XXGB when uncompressed, so make sure you have enough space on your computer). Please note that:
   * these data have been processed for teaching purposes and are therefore not suitable for research use;
-  * all the data is provided on our training machines, you don't need to download it to attend the course.
 
 
 ## How will it work?
@@ -73,16 +72,18 @@ It is assumed you will try the exercises between the two sessions. At the clinic
   + [Practical](Markdowns/03_CellRanger.html)
 
 
-<!--
+
 
 ### Week 2 
 
-* Quality Control and Filtering - Chandra Chilamakuri 
+* Quality Control and Filtering - Abbi Edwards 
 
   + [Practical](Markdowns/04_Preprocessing_And_QC.html)
-  + [Practical Recording](https://crukci-my.sharepoint.com/:v:/g/personal/ashley_sawle_cruk_cam_ac_uk/EVxnj7mEuWdInh-lb874kIIBPEklxCFzy2EYbj85T80vOQ?e=cX19e1)
+
   + [Exercise](Markdowns/04_Preprocessing_And_QC.Exercise.html) 
-  + [Exercise Recording](https://crukci-my.sharepoint.com/:v:/g/personal/ashley_sawle_cruk_cam_ac_uk/EZ40xT4OQ6VIiAiGv9DVyPcBnOFdMLyAyLFQxcoStvzHCg?e=FSZmSg)
+
+  
+<!--
 
 ### Week 3 
 
