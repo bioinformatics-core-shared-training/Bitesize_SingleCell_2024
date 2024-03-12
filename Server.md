@@ -5,9 +5,9 @@
 To start the RStudio server use the following command:
   
 
-__**scripts/rstudio-server.sh**__
+__**rstudio-server --reservation=chilam01_101**__
 
-Select option 1 when prompted.
+Select option 5 (rstudio_scRNAseq_4.3.3.sif) when prompted.
 
 This will send a job to the cluster to start the RStudio server with 8 cores and
 32 Gigabytes of memory. Once the job starts you will get a message like this:
