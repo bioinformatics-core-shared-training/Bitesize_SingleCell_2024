@@ -4,14 +4,14 @@
 
 To start the RStudio server use the following command:
   
-  ```{bash, eval=FALSE}
-scripts/rstudio-server.sh
-```
+
+__**scripts/rstudio-server.sh**__
+
 
 This will send a job to the cluster to start the RStudio server with 8 cores and
 32 Gigabytes of memory. Once the job starts you will get a message like this:
   
-![](../Images/RStudioMessage.png)
+![](Images/RStudioMessage.png)
 
 To launch the RStudio server:
   
