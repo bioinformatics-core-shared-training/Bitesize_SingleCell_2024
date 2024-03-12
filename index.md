@@ -78,6 +78,8 @@ It is assumed you will try the exercises between the two sessions. At the clinic
 
 * Quality Control and Filtering - Abbi Edwards 
 
+  + [RStudio Server Instructions](Server.md)
+
   + [Practical](Markdowns/04_Preprocessing_And_QC.html)
 
   + [Exercise](Markdowns/04_Preprocessing_And_QC.Exercise.html) 
