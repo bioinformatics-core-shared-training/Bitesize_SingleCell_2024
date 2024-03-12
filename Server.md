@@ -5,7 +5,7 @@
 To start the RStudio server use the following command:
   
 
-__rstudio-server `--`reservation=chilam01_101__
+`rstudio-server --reservation=chilam01_101`
 
 Select option 5 (rstudio_scRNAseq_4.3.3.sif) when prompted.
 
