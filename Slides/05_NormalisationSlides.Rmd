@@ -1,7 +1,7 @@
 ---
 title: "Introduction to single-cell RNA-seq analysis - Normalisation"
 author: "Chandra Chilamakuri and Stephane Ballereau and Adam Reid"
-date: "25/01/2023"
+date: "15/03/2024"
 output:
   ioslides_presentation:
     widescreen: yes
@@ -110,7 +110,7 @@ var(log(c(2,4,2,4,2,4,2,4))) = 0.14
 var(log(c(20,40,20,40,20,40,20,40))) = 0.14
 
 ```{r echo=FALSE, , fig.align='right', out.width= "60%", out.extra='style="float:right; padding:10px"'}
-knitr::include_graphics('Images/variance_mean_uncorrected.png')
+knitr::include_graphics('Images/mean_var_norm-1.png')
 ```
 
 This "variable stabilising transformation" helps to remove the correlation between mean and variance
