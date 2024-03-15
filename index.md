@@ -85,18 +85,17 @@ It is assumed you will try the exercises between the two sessions. At the clinic
   + [Exercise](Markdowns/04_Preprocessing_And_QC.Exercise.html) 
 
   
-<!--
+
 
 ### Week 3 
 
 * Normalisation - Kamal Kishore
 
-  + [Slides](Slides/Normalization.pdf)
+  + [Slides](Slides/05_NormalisationSlides.html)
   + [Practical](Markdowns/05_Normalisation.html)
-  + [Practical Recording](https://crukci-my.sharepoint.com/:v:/g/personal/ashley_sawle_cruk_cam_ac_uk/ERz62g1cBdFCkXf_y9YufzEBH6zN-j3QkTrjsV8UFf4WSw?e=zPSnlq)
   + [Exercises](Markdowns/05_Normalisation_exercises.html)
 
-
+<!--
 ### Week 4
 
 * Feature selection and Dimensionality Reduction - Chandra Chilamakuri
