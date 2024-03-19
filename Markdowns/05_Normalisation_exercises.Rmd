@@ -29,6 +29,19 @@ opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE, cache=TRUE)
 set.seed(123)
 ```
 
+# Load packages
+
+```{r packages, eval=FALSE}
+#install.packages('irlba')
+library(irlba)
+library(knitr)
+library(scater)
+library(scran)
+library(tidyverse)
+library(BiocParallel)
+library(patchwork)
+```
+
 
 ## Prepare the data object
 

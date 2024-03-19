@@ -31,6 +31,19 @@ chapters on normalisation in the
 and the [Hemberg Group course materials](https://www.singlecellcourse.org/).
 
 
+# Load packages
+
+```{r packages, eval=FALSE}
+#install.packages('irlba')
+library(irlba)
+library(knitr)
+library(scater)
+library(scran)
+library(tidyverse)
+library(BiocParallel)
+library(patchwork)
+```
+
 
 ## Load data object
 

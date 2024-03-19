@@ -514,10 +514,11 @@ analysis</h1>
 
 <div id="TOC">
 <ul>
-<li><a href="#normalisation-practical" id="toc-normalisation-practical"><span class="toc-section-number">1</span> Normalisation Practical</a>
+<li><a href="#normalisation-practical" id="toc-normalisation-practical"><span class="toc-section-number">1</span> Normalisation Practical</a></li>
+<li><a href="#load-packages" id="toc-load-packages"><span class="toc-section-number">2</span> Load packages</a>
 <ul>
-<li><a href="#prepare-the-data-object" id="toc-prepare-the-data-object"><span class="toc-section-number">1.1</span> Prepare the data object</a></li>
-<li><a href="#normalisation-by-deconvolution" id="toc-normalisation-by-deconvolution"><span class="toc-section-number">1.2</span> Normalisation by
+<li><a href="#prepare-the-data-object" id="toc-prepare-the-data-object"><span class="toc-section-number">2.1</span> Prepare the data object</a></li>
+<li><a href="#normalisation-by-deconvolution" id="toc-normalisation-by-deconvolution"><span class="toc-section-number">2.2</span> Normalisation by
 deconvolution</a></li>
 </ul></li>
 </ul>
@@ -530,8 +531,19 @@ Practical</h1>
 per sample. For this practical you will carry out normalisation, but
 this time using the all of the cells in one sample - ETV6_RUNX_1. Some
 of the commands will take a little longer to run this time.</p>
-<div id="prepare-the-data-object" class="section level2" number="1.1">
-<h2><span class="header-section-number">1.1</span> Prepare the data
+</div>
+<div id="load-packages" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Load packages</h1>
+<pre class="r"><code>#install.packages(&#39;irlba&#39;)
+library(irlba)
+library(knitr)
+library(scater)
+library(scran)
+library(tidyverse)
+library(BiocParallel)
+library(patchwork)</code></pre>
+<div id="prepare-the-data-object" class="section level2" number="2.1">
+<h2><span class="header-section-number">2.1</span> Prepare the data
 object</h2>
 <p>First we will load the full filtered data set. This data was
 previously filtered to remove poor quality cells.</p>
@@ -609,8 +621,8 @@ sum(counts(sce)[orc1_row, ] &gt; 0)</code></pre>
 </details>
 </div>
 </div>
-<div id="normalisation-by-deconvolution" class="section level2" number="1.2">
-<h2><span class="header-section-number">1.2</span> Normalisation by
+<div id="normalisation-by-deconvolution" class="section level2" number="2.2">
+<h2><span class="header-section-number">2.2</span> Normalisation by
 deconvolution</h2>
 <div class="exercise">
 <p>Now normalise the data set using the deconvolution method. You will
@@ -641,26 +653,26 @@ Hint
 <summary>
 Answer
 </summary>
-<div id="cluster-cells" class="section level3" number="1.2.1">
-<h3><span class="header-section-number">1.2.1</span> Cluster cells</h3>
+<div id="cluster-cells" class="section level3" number="2.2.1">
+<h3><span class="header-section-number">2.2.1</span> Cluster cells</h3>
 <pre class="r"><code>set.seed(100) 
 clust &lt;- quickCluster(sce, BPPARAM = bpp)</code></pre>
 </div>
-<div id="compute-size-factors" class="section level3" number="1.2.2">
-<h3><span class="header-section-number">1.2.2</span> Compute size
+<div id="compute-size-factors" class="section level3" number="2.2.2">
+<h3><span class="header-section-number">2.2.2</span> Compute size
 factors</h3>
 <pre class="r"><code>sce &lt;- computePooledFactors(sce,
              clusters = clust,
              min.mean = 0.1,
              BPPARAM = bpp)</code></pre>
 </div>
-<div id="apply-size-factors" class="section level3" number="1.2.3">
-<h3><span class="header-section-number">1.2.3</span> Apply size
+<div id="apply-size-factors" class="section level3" number="2.2.3">
+<h3><span class="header-section-number">2.2.3</span> Apply size
 factors</h3>
 <pre class="r"><code>sce &lt;- logNormCounts(sce)</code></pre>
 </div>
-<div id="check-assays" class="section level3" number="1.2.4">
-<h3><span class="header-section-number">1.2.4</span> Check assays</h3>
+<div id="check-assays" class="section level3" number="2.2.4">
+<h3><span class="header-section-number">2.2.4</span> Check assays</h3>
 <pre class="r"><code>assayNames(sce)</code></pre>
 <pre><code>## [1] &quot;counts&quot;    &quot;logcounts&quot;</code></pre>
 </details>
