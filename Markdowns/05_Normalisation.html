@@ -483,7 +483,8 @@ library(scater)
 library(scran)
 library(tidyverse)
 library(BiocParallel)
-library(patchwork)</code></pre>
+library(patchwork)
+bpp &lt;- MulticoreParam(7)</code></pre>
 <div id="load-data-object" class="section level2" number="2.1">
 <h2><span class="header-section-number">2.1</span> Load data object</h2>
 <p>For the purposes of this demonstration we have generated a smaller

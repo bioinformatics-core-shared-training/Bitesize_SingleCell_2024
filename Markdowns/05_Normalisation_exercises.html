@@ -389,7 +389,7 @@ border-left: 10px solid #FFC107;
 .exercise {
 background-color: #fef9f1;
 box-shadow: 0 0 3px 2px #fcedd7;
-background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjI0IiB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIyNCI+PGc+PHBhdGggZD0iTTAsMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PC9nPjxnPjxwYXRoIGQ9Ik00LDZIMnYxNGMwLDEuMSwwLjksMiwyLDJoMTR2LTJINFY2eiBNMjAsMkg4QzYuOSwyLDYsMi45LDYsNHYxMmMwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0yVjQgQzIyLDIuOSwyMS4xLDIsMjAsMnogTTIwLDE2SDhWNGgxMlYxNnogTTEzLjUxLDEwLjE2YzAuNDEtMC43MywxLjE4LTEuMTYsMS42My0xLjhjMC40OC0wLjY4LDAuMjEtMS45NC0xLjE0LTEuOTQgYy0wLjg4LDAtMS4zMiwwLjY3LTEuNSwxLjIzbC0xLjM3LTAuNTdDMTEuNTEsNS45NiwxMi41Miw1LDEzLjk5LDVjMS4yMywwLDIuMDgsMC41NiwyLjUxLDEuMjZjMC4zNywwLjYsMC41OCwxLjczLDAuMDEsMi41NyBjLTAuNjMsMC45My0xLjIzLDEuMjEtMS41NiwxLjgxYy0wLjEzLDAuMjQtMC4xOCwwLjQtMC4xOCwxLjE4aC0xLjUyQzEzLjI2LDExLjQxLDEzLjE5LDEwLjc0LDEzLjUxLDEwLjE2eiBNMTIuOTUsMTMuOTUgYzAtMC41OSwwLjQ3LTEuMDQsMS4wNS0xLjA0YzAuNTksMCwxLjA0LDAuNDUsMS4wNCwxLjA0YzAsMC41OC0wLjQ0LDEuMDUtMS4wNCwxLjA1QzEzLjQyLDE1LDEyLjk1LDE0LjUzLDEyLjk1LDEzLjk1eiIvPjwvZz48L3N2Zz4=);
+background-image: url("https://fonts.gstatic.com/s/i/materialiconsoutlined/quiz/v8/24px.svg");
 }
 .exercise:before {
 counter-increment: question;
@@ -541,7 +541,8 @@ library(scater)
 library(scran)
 library(tidyverse)
 library(BiocParallel)
-library(patchwork)</code></pre>
+library(patchwork)
+bpp &lt;- MulticoreParam(7)</code></pre>
 <div id="prepare-the-data-object" class="section level2" number="2.1">
 <h2><span class="header-section-number">2.1</span> Prepare the data
 object</h2>
