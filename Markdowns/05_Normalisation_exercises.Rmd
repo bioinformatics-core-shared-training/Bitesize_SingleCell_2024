@@ -17,6 +17,7 @@ all of the cells in one sample - ETV6_RUNX_1. Some of the commands will take a
 little longer to run this time.
 
 ```{r setup, echo=FALSE, message=FALSE, warning=FALSE, purl=FALSE}
+library(irlba)
 library(knitr)
 library(scater)
 library(scran)
