@@ -385,16 +385,21 @@ CellRanger gene annotation was generated.
 
 ```{r annotate_genes}
 ah <- AnnotationHub()
-ens.hs.107<- query(ah, c("Homo sapiens", "EnsDb", 107))[[1]] 
+ens.hs.107 <- query(ah, c("Homo sapiens", "EnsDb", 107))[[1]] 
 
-genes <- rowData(sce)$ID
-gene_annot <- AnnotationDbi::select(ens.hs.107, 
-                                    keys = genes,
-                                    keytype = "GENEID",
-                                    columns = c("GENEID", "SEQNAME")) %>%
-    set_names(c("ID", "Chromosome"))
-rowData(sce) <- merge(rowData(sce), gene_annot, by = "ID", sort=FALSE)
-rownames(rowData(sce)) <- rowData(sce)$ID
+annotations <- genes(ens.hs.107, return.type = "data.frame")  %>%
+  dplyr::select(gene_id, seq_name) %>%
+  dplyr::rename(ID=gene_id)
+
+gene_metadata <- as.data.frame(rowData(sce)) %>%
+  mutate(ID = rownames(.)) %>%
+  left_join(annotations, by = "ID") %>%
+  dplyr::rename(Chromosome=seq_name)
+
+rowData(sce) <- DataFrame(gene_metadata)
+
+rownames(sce) <- uniquifyFeatureNames(rowData(sce)$ID,
+                                      rowData(sce)$Symbol)
 
 rowData(sce)
 ```

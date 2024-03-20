@@ -17,10 +17,10 @@ all of the cells in one sample - ETV6_RUNX_1. Some of the commands will take a
 little longer to run this time.
 
 ```{r setup, echo=FALSE, message=FALSE, warning=FALSE, purl=FALSE}
+library(irlba)
 library(knitr)
 library(scater)
 library(scran)
-library(sctransform)
 library(tidyverse)
 library(BiocParallel)
 
@@ -29,14 +29,20 @@ opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE, cache=TRUE)
 set.seed(123)
 ```
 
-```{r load_packages, eval=FALSE}
+# Load packages
+
+```{r packages, eval=FALSE}
+#install.packages('irlba')
+library(irlba)
+library(knitr)
 library(scater)
 library(scran)
 library(tidyverse)
 library(BiocParallel)
-
+library(patchwork)
 bpp <- MulticoreParam(7)
 ```
+
 
 ## Prepare the data object
 
@@ -179,131 +185,3 @@ assayNames(sce)
 </details>
 
 :::
-
-## Normalisation with variance stabilising transformation
-
-As in the demonstration, we will extract the counts matrix from our SCE object
-and run the variance stabilising transformation (VST) algorithm, using the
-`sctranform` package's `vst` command, directly on the matrix.
-
-```{r extract_counts_matrix}
-counts <- counts(sce)
-```
-
-### Estimation and transformation
-
-:::exercise 
-
-Now use the `vst` function on the counts matrix to estimate model parameters and
-perform the variance stabilizing transformation. Call the newly created object
-`vst_out`.
-
-<details><summary>Hint</summary>
-
-You will need to provide 4 arguments:
-
-* `umi` - The matrix of UMI counts with genes as rows and cells as columns  
-* `latent_var` - The independent variables to regress out as a character vector
-- in this case this should be 'log_umi'
-* `return_gene_attr` - set to 'TRUE'
-* `return_cell_attr` - set to 'TRUE' 
-
-</details>
-
-<details><summary>Answer</summary>
-
-```{r exercise_3_answer, eval=FALSE, purl=FALSE}
-set.seed(44)
-vst_out <- vst(umi = counts,
-               latent_var = 'log_umi',
-               return_gene_attr = TRUE,
-               return_cell_attr = TRUE
-  )
-```
-
-
-```{r exercise_3_answer_run, echo=FALSE, purl=FALSE}
-set.seed(44)
-vst_out <- vst(umi = counts,
-               latent_var = 'log_umi',
-               return_gene_attr = TRUE,
-               return_cell_attr = TRUE,
-               verbosity = 0
-  )
-```
-
-</details>
-
-:::
-
-Check that the model used is the one we want (regressing out the effect of 
-library size).
-
-```{r check_vst_model}
-print(vst_out$model_str)
-```
-
-:::exercise
-
-Use the `plot_model` function to inspect the genes 'RPL10' and 'FTL' to see if
-the fitted relationship between cell total UMI and gene expression, and to 
-check the residuals.
-
-<details><summary>Hint</summary>
-
-First you will need to retrieve the Ensembl IDs for each of the genes from the
-`rowData` of the original sce object.
-
-The `plot_model` function requires four arguments:
-
-+ `x` - the output of `vst`
-+ `umi` - the counts matrix that `vst` was run on
-+ `goi` - the IDs of the **g**enes **o**f **i**nterest - these should match the
-rownames of the original counts matrix. In our case these should be Ensembl IDS
-+ `plot_residual` - set this to `TRUE`
-
-</details>
-
-<details><summary>Answer</summary>
-
-```{r exercise_4_answer, purl=FALSE}
-ensId <- rowData(sce) %>%
-	as.data.frame %>%
-	filter(Symbol %in% c('RPL10', 'FTL')) %>%
-  pull("ID")
-
-plot_model(x = vst_out,
-           umi = counts,
-           goi = ensId,
-           plot_residual = TRUE)
-```
-
-</details>
-
-:::
-
-### Overall properties of transformed data
-
-The distribution of residual mean should be centered around 0.
-
-```{r residual_mean_histogram}
-ggplot(vst_out$gene_attr, aes(residual_mean)) +
-  geom_histogram(binwidth=0.01)
-```
-
-The distribution of residual variance should be centered around 1.
-
-```{r residual_variance_histogram}
-ggplot(vst_out$gene_attr, aes(residual_variance)) +
-  geom_histogram(binwidth=0.1) +
-  geom_vline(xintercept=1, color='red') +
-  xlim(0, 10)
-```
-
-Finally, check that the relationship between variance and mean has been removed.
-
-```{r residual_variance_v_mean_plot}
-ggplot(vst_out$gene_attr,
-       aes(log10(gmean), residual_variance)) +
-       geom_point(alpha=0.3, shape=16)
-```

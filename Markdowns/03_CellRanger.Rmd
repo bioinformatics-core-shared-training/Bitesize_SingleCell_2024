@@ -384,7 +384,6 @@ We will be using a piece of software developed specifically for the CI called
 download the clarity tools file.
 
 ```{bash, eval=FALSE}
-mkdir software
 wget -P software http://internal-bioinformatics.cruk.cam.ac.uk/software/clarity-tools.jar 
 ```
 
@@ -425,10 +424,10 @@ Note: checksums are a way to ensure the integrity of downloaded data. See
 There are also five "lost reads" files:
 
 * **SLX-21334.HTLCWDRXY.s_2.i_1.lostreads.fq.gz** - Index 1 lost reads
-* **SLX-21334.HTLCWDRXY.s_2.i_2.lostreads.fq.gz** - Index 1 lost reads
+* **SLX-21334.HTLCWDRXY.s_2.i_2.lostreads.fq.gz** - Index 2 lost reads
 * **SLX-21334.HTLCWDRXY.s_2.lostreads.md5sums.txt** - checksum for lost reads
-* **SLX-21334.HTLCWDRXY.s_2.r_1.lostreads.fq.gz** - Index 1 lost reads
-* **SLX-21334.HTLCWDRXY.s_2.r_2.lostreads.fq.gz** - Index 1 lost reads
+* **SLX-21334.HTLCWDRXY.s_2.r_1.lostreads.fq.gz** - read1 1 lost reads
+* **SLX-21334.HTLCWDRXY.s_2.r_2.lostreads.fq.gz** - read2 2 lost reads
 
 When the data come off the sequencer, all the reads for all the samples are in a
 single file. In order to separate them, the automated process compares the reads

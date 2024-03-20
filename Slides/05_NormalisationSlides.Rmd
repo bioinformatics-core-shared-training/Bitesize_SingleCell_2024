@@ -1,7 +1,7 @@
 ---
 title: "Introduction to single-cell RNA-seq analysis - Normalisation"
 author: "Chandra Chilamakuri and Stephane Ballereau and Adam Reid"
-date: "25/01/2023"
+date: "15/03/2024"
 output:
   ioslides_presentation:
     widescreen: yes
@@ -110,7 +110,7 @@ var(log(c(2,4,2,4,2,4,2,4))) = 0.14
 var(log(c(20,40,20,40,20,40,20,40))) = 0.14
 
 ```{r echo=FALSE, , fig.align='right', out.width= "60%", out.extra='style="float:right; padding:10px"'}
-knitr::include_graphics('Images/variance_mean_uncorrected.png')
+knitr::include_graphics('Images/mean_var_norm-1.png')
 ```
 
 This "variable stabilising transformation" helps to remove the correlation between mean and variance
@@ -138,11 +138,9 @@ CPM: convert raw counts to counts-per-million (CPM)
 
 DESeq’s size factor
 
-* For each gene, compute geometric mean across cells
-* For each cell
-    * compute for each gene the ratio of its expression to its geometric mean,
-    * derive the cell’s size factor as the median ratio across genes.
-* Not suitable for sparse scRNA-seq data as the geometric mean is computed on non-zero values only.
+* Assume  most genes are not DE between cells. For each gene, compute geometric mean across cells.
+* Any count size variation among non-DE majority genes between two cells is presumed as bias, utilized for determining an appropriate size factor for removal.
+* Not suitable for sparse scRNA-seq data due to the dominance of low and zero counts.
   
 ## Bulk RNA-seq normalization methods fail for scRNA-seq data
 
@@ -160,17 +158,18 @@ knitr::include_graphics("../Images/scran_Fig3c2.png", auto_pdf = TRUE)
 
 Steps:
 
+* cluster cells based on gene expression
 * compute scaling factors by pooling cells
 * apply scaling factors to get scaled data
 * log2 transform the data
 
 ## Recap
 
-* We get different total counts for each cell due to technical factors (depth bias)
-* A simplistic library size normalisation (e.g. CPM) removes a large part of this bias
-* However, composition bias causes spurious differences between cells
-* Early methods developed for bulk RNA-seq are not appropriate for sparse scRNA- seq data.
-* The deconvolution method draws information from pools of cells to derive cell- based scaling factors that account for composition bias in scRNA-seq data.
+* We get different total counts for each cell due to technical factors (depth bias).
+* A simplistic library size normalisation removes a large part of this bias.
+* However, composition bias causes spurious differences between cells.
+* Methods developed for bulk RNA-seq are not appropriate for sparse scRNA- seq data.
+* The deconvolution method draws information from pools of similarly clustered cells to derive cell- based scaling factors that account for composition bias in scRNA-seq data.
 
 In the demonstration and exercises we will see the effect of deconvolution on the data.
 
