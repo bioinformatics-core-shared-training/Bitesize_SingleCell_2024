@@ -1,0 +1,10 @@
+There is currently an issue changes in Matrix 1.6-2 that seem to have broken
+irlba::irlba(). This results in the following error when a command such as
+`quickCluster` is run:
+
+Error in (function (A, nv = 5, nu = nv, maxit = 1000, work = nv + 7, reorth = TRUE,  :
+                      function 'as_cholmod_sparse' not provided by package 'Matrix'
+
+The workaround is to reinstall the irlba package. Hopefully this will be resolved in
+future and the workaround will no longer be necessary.
+
