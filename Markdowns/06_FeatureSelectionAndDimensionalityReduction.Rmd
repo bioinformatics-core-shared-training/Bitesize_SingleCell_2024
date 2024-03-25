@@ -54,7 +54,7 @@ We will load the _SingleCellExperiment_ object generated in the
 for 500 cells per sample. For demonstration purposes we are not using the full dataset but you would in your analyses.
 
 ```{r read_data, cache=FALSE}
-sce <- readRDS("R_objects/Caron_normalized.500.rds")
+sce <- readRDS("Data/Caron_normalized.500.rds")
 sce
 ```
 
@@ -988,7 +988,7 @@ reduction analysis in it.
 This is useful as it will save time next time we pick up on our analysis. 
 
 ```{r save_dimRed_sce, eval=FALSE, purl=FALSE}
-saveRDS(sce, "Robjects/caron_dimRed.Rds")
+saveRDS(sce, "Data/caron_dimRed.Rds")
 ```
 
 
@@ -1001,7 +1001,7 @@ tools for analysing PCA loadings. We will convert our `SCE` object to a `Seurat`
 object to use these tools.
 
 ```{r seurat_workflow, purl=FALSE}
-sce <- readRDS("R_objects/Caron_normalized.500.rds")
+sce <- readRDS("Data/Caron_normalized.500.rds")
 
 # convert SCE object to a Seurat object 
 library(Seurat)
