@@ -95,15 +95,14 @@ It is assumed you will try the exercises between the two sessions. At the clinic
   + [Practical](Markdowns/05_Normalisation.html)
   + [Exercises](Markdowns/05_Normalisation_exercises.html)
 
-<!--
+
 ### Week 4
 
 * Feature selection and Dimensionality Reduction - Chandra Chilamakuri
   + [Slides](Slides/06_FeatureSelectionAndDimensionalityReduction_slides.html)
   + [Practical/Exercises](Markdowns/06_FeatureSelectionAndDimensionalityReduction.html)
-  + [Recording](https://crukci-my.sharepoint.com/:v:/g/personal/ashley_sawle_cruk_cam_ac_uk/ERRZyduqdKhFj3IERlyxdUsBB8luGfe6KYk7cnTG0LP0mw?e=N09oEN)
 
-
+<!--
 
 ### Week 5
 
