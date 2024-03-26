@@ -463,6 +463,8 @@ We can then compare the observed variance explained in the original data with
 this null or random expectation and determine a cutoff where the observed
 variance explained drops to similar values as the variance explained in the
 shuffled data.
+Code for PCA permutation test: https://twitter.com/MattOldach/status/1075037756563382274
+
 
 ```{r permutation_example, echo=FALSE}
 tibble(Observed = percent.var) %>%
