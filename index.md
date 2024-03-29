@@ -102,17 +102,18 @@ It is assumed you will try the exercises between the two sessions. At the clinic
   + [Slides](Slides/06_FeatureSelectionAndDimensionalityReduction_slides.html)
   + [Practical/Exercises](Markdowns/06_FeatureSelectionAndDimensionalityReduction.html)
 
-<!--
+
 
 ### Week 5
 
-* Batch Correction and Data Set Integration - Abbi Edwards
+* Batch Correction and Data Set Integration - Kamal Kishore
   + [Slides](Slides/07_DataIntegrationAndBatchCorrectionSlides.html)
   + [Demo/Exercise](Markdowns/07_DatasetIntegration.html)
   + [Recording of taught session](https://crukci-my.sharepoint.com/:v:/g/personal/ashley_sawle_cruk_cam_ac_uk/Eb_qESD1qsBBlWkppbiMkvoB5LriLWM5Sf1cfCjPr_amuQ?e=PNCiis) 
   + [Recording of Clinic](https://crukci-my.sharepoint.com/:v:/g/personal/ashley_sawle_cruk_cam_ac_uk/Ed4aZNTOUolElV5ZVWYLNdgBGeO-lhnttX7zl3DZdyglIw?e=nehZkw)
   + [Suggested Solution](Markdowns/07_DatasetIntegration_clinic.html)
 
+<!--
 ### Week 6
 
 * Clustering and Cluster Marker genes - Ashley Sawle  
