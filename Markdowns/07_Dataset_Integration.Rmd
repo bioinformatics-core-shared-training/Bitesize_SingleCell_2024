@@ -355,7 +355,7 @@ correction.
 ## Uncorrected batches {-}
 
 ```{r batch_cluster_visualization_uncorrected}
-data.frame(Cluster = sce$cluster_uncorrected, Batch = sce$batch) %>%
+p1 <- data.frame(Cluster = sce$cluster_uncorrected, Batch = sce$batch) %>%
   ggplot(aes(x = Cluster)) +
     geom_bar(aes(fill = Batch), position = "fill") +
     labs(title = "MNN-corrected data") +
@@ -366,11 +366,14 @@ data.frame(Cluster = sce$cluster_uncorrected, Batch = sce$batch) %>%
 ## Corrected batches {-}
 
 ```{r batch_cluster_visualization_corrected}
-data.frame(Cluster = sce$cluster_corrected, Batch = sce$batch) %>%
+p2 <- data.frame(Cluster = sce$cluster_corrected, Batch = sce$batch) %>%
   ggplot(aes(x = Cluster)) +
     geom_bar(aes(fill = Batch), position = "fill") +
     labs(title = "MNN-corrected data") +
   scale_y_continuous(labels = scales::percent)
+
+require(gridExtra)
+grid.arrange(p1,p2,ncol=2)
 ```
 
 We can confirm from this visualisation that there is more mixing of cells within
@@ -420,9 +423,6 @@ This object has been processed as discussed in the previous sections, but we
 down-sampled the data to 500 cells per sample for processing speed (in real
 analysis you would not do this).
 
-In the "Exercises" directory there is an R script called
-*07_Dataset_Integration_Exercise.R*. This contains some code to get you started
-by reading the data and checking how many cells we have in each sample.
 
 You should then add the rest of the code in order to:
 
@@ -474,6 +474,11 @@ sce_all <- readRDS("R_objects/Caron_dimRed.500.rds")
 ```
 
 ```{r exercise1_answer, purl=FALSE}
+
+# load the object
+sce_all <- readRDS("R_objects/Caron_dimRed.500.rds")
+
+
 # obtain a batch-corrected SCE object
 sce_all_corrected <- quickCorrect(sce_all, batch = sce_all$SampleName)$corrected
 
@@ -561,6 +566,8 @@ merge_order <- list(
           list("PBMMC_1", "PBMMC_2", "PBMMC_3"),
           list("PRE-T_1", "PRE-T_2")
                    )
+
+sce_all <- readRDS("R_objects/Caron_dimRed.500.rds")
 
 sce_all_corrected <- quickCorrect(sce_all,
                                   batch = sce_all$SampleName,
