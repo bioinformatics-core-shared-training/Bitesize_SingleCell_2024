@@ -109,7 +109,7 @@ It is assumed you will try the exercises between the two sessions. At the clinic
 * Batch Correction and Data Set Integration - Kamal Kishore
   + [Slides](Slides/07_DataIntegrationAndBatchCorrectionSlides.html)
   + [Practical/Exercise](Markdowns/07_Dataset_Integration.html)
-  + [Recording](https://crukci-my.sharepoint.com/:v:/r/personal/kamal_kishore_cruk_cam_ac_uk/Documents/Recordings/Meeting%20with%20Kamal%20Kishore-20240402_130508-Meeting%20Recording.mp4?csf=1&web=1&e=moNNxu&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D)
+  + [Recording](https://crukci-my.sharepoint.com/:v:/g/personal/kamal_kishore_cruk_cam_ac_uk/EXlMYN6w5uVOpzHjCLV_Zu0BIFFYXah2XgdmZEcFkZdgxg?e=Pwb8WP&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D)
     
 <!--
 ### Week 6
