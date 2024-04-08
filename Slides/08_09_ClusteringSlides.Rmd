@@ -1,0 +1,350 @@
+---
+title: "Clustering and Marker Genes"
+date: "April 2024"
+output:
+  ioslides_presentation:
+    widescreen: yes
+    smaller: yes
+    logo: Images/CRUK_Cambridge_Institute_2023.png
+    css: css/stylesheet.css
+  beamer_presentation: default
+---
+
+```{r include=FALSE}
+library(tidyr)
+library(dplyr)
+```
+
+## Single Cell RNAseq Analysis Workflow
+
+```{r, echo=FALSE, out.width='70%', fig.align='center'}
+knitr::include_graphics('Images/workflow2_clustering.png')
+```
+
+## Motivation
+
+The data has been QC'd, normalized, and batch corrected.
+  
+We can now start to understand the dataset by identifying cell types. This involves two steps:
+
+* unsupervised clustering: identification of groups of cells based on the
+similarities of the transcriptomes without any prior knowledge of the labels
+usually using the PCA output
+
+* annotation of cell-types based on transcription profiles
+
+
+## Clustering methods
+
+* Roughly classified into four categories
+  * k-means clustering
+  * hierarchical clustering
+  * density-based clustering
+  * Graph-based clustering
+
+* First three methods dose not scale well for the large data sets. 
+* Data from single cells is best clustered using a graph-based approach, as it is faster and more efficient.
+
+## Graph-based clustering
+
+Pros
+
+* fast and memory efficient (no distance matrix for all pairs of cells) 
+* no assumptions on the shape of the clusters or the distribution of cells
+  within each cluster
+* no need to specify a number of clusters to identify
+
+Cons
+
+* loss of information beyond neighboring cells, which can affect community
+  detection in regions with many cells.
+
+The steps involved:
+
+```{r, echo=FALSE, out.width = '80%', fig.align="center"}
+knitr::include_graphics("Images/graph_based_clustering_overview.svg", auto_pdf = TRUE)
+```
+
+## Making a graph
+
+```{r, echo=FALSE,out.width = '40%', out.extra='style="float:right; #padding:10px"'}
+knitr::include_graphics("Images/KNNvSNN.png", auto_pdf = TRUE)
+```
+
+Nearest-Neighbour (NN) graph:
+
+  * cells as nodes
+  * their similarity as edges
+
+In a NN graph two nodes (cells), say A and B, are connected by an edge if:
+
+* the distance between them (in e.g. principal component space) is amongst the **k** smallest distances (here k = 5) from A to other cells, (**K**NN) 
+
+or  
+
+* In a **shared**-NN graph (**S**NN) two cells are connected by an edge if any of their nearest neighbors are shared (n.b. in Seurat this is different)
+  
+Once edges have been defined, they can be weighted. By default the weights are calculated using the 'rank' method which relates to the highest ranking of their shared neighbours. 
+
+<p class="forceBreak"></p>
+
+
+## Making a graph
+
+Example with different numbers of neighbours (k):
+
+```{r, echo=FALSE, out.height='100%', out.width = '100%', fig.align="center"}
+knitr::include_graphics("Images/bioCellGenGraphDeng2.png", auto_pdf = TRUE)
+```
+
+## Identifying communities/clusters {.smaller}
+
+
+```{r, echo=FALSE,out.width = '35%', out.extra='style="float:right; #padding:10px"'}
+knitr::include_graphics("Images/community.svg", auto_pdf = TRUE)
+```
+
+What makes a commuity?
+
+A community is a cohesive subgroup within a network has following
+characteristics
+
+* **Mutual ties**: Most of the members are tied to one another within a 
+  community.
+* **Compactness**: A small number of steps are required to reach a group members
+  within a community.
+* **High density of ties**: High density of ties with in a community.
+* **Separation**: High frequency of ties with in a community members when 
+  compared to non-members.
+
+## Community detection algorithms
+
+Here we will address three community detection algorithms: **walktrap**,
+**louvain** and **leiden**.
+
+These methods rely on the **_modularity_** metric to determine a good clustering. 
+
+For a given partition of cells into clusters, modularity measures how separated
+clusters are from each other. This is based on the difference between the
+observed and expected (i.e. random) weight of edges within and between clusters.
+For the whole graph, the closer to 1 the better.
+
+## Identifying communities/clusters - Walktrap
+
+The walktrap method relies on short random walks (a few steps) through the
+network. These walks tend to be 'trapped' in highly-connected regions of the
+network. Node similarity is measured based on these walks.
+
+* Nodes are first each assigned their own community.
+* Pairwise distances are computed and the two closest communities are grouped.
+* These steps are repeated a given number of times to produce a dendrogram.
+* Hierarchical clustering to optimise partition based on modularity.
+
+
+```{r, echo=FALSE, out.width='25%', fig.align='center'}
+knitr::include_graphics('Images/walktrap.svg')
+```
+
+## Identifying communities/clusters - Walktrap
+
+The walktrap method relies on short random walks (a few steps) through the
+network. These walks tend to be 'trapped' in highly-connected regions of the
+network. Node similarity is measured based on these walks.
+
+* Nodes are first each assigned their own community.
+* Pairwise distances are computed and the two closest communities are grouped.
+* These steps are repeated a given number of times to produce a dendrogram.
+* Hierarchical clustering to optimise partition based on modularity.
+
+<div style="width: 25%; 
+            float: left">
+<img src="Images/walktrap1.svg" style="width: 100%">
+</div>
+
+<div style="width: 25%;
+            float: right;">
+<img src="Images/walktrap4.svg" style="width: 100%">
+</div>
+
+<div style="width: 25%;
+            float: right;">
+<img src="Images/walktrap3.svg" style="width: 100%">
+</div>
+
+<div style="width: 25%;
+            float: right;">
+<img src="Images/walktrap2.svg" style="width: 100%">
+</div>
+
+[Pons and    Latapy, Computing communities in large networks using random walks](https://arxiv.org/abs/physics/0512106))
+
+## Identifying communities/clusters - Louvain
+
+```{r, echo=FALSE, out.height='40%', out.width = '40%', out.extra='style="float:right; padding:10px"'}
+knitr::include_graphics("Images/leiden_Fig1_noLegend.png", auto_pdf = TRUE)
+```
+
+Nodes are also first assigned their own community.
+
+Two-step iterations:
+
+* nodes are re-assigned one at a time to the community for which they increase modularity the most,
+* a new, 'aggregate' network is built where nodes are the communities formed in the previous step.
+
+This is repeated until modularity stops increasing.
+
+([Blondel et al, Fast unfolding of communities in large networks](https://iopscience.iop.org/article/10.1088/1742-5468/2008/10/P10008/meta))
+
+([Traag et al, From Louvain to Leiden: guaranteeing well-connected communities](https://www.nature.com/articles/s41598-019-41695-z))
+
+## Identifying communities/clusters - Leiden {.smaller}
+
+There is an issue with the Louvain method - some communities may become disconnected.
+
+The Leiden method improves on the Louvain method by guaranteeing that at each iteration clusters are connected and well-separated. The partitioning is refined (step2) before the aggregate network is made.
+
+<div style="width: 47%; 
+            float: left">
+<img src="Images/leiden_Fig2_HTML.png" style="width: 100%">
+</div>
+
+<div style="width: 47%;
+            float: right;">
+<img src="Images/leiden_Fig3_noLegend_noBackground.png" style="width: 100%">
+</div>
+
+## Separatedness - silhouette width
+
+Silhouette width provides a measure of how well clustered each cell is. It
+compares the mean distance between each cell and cells in the same cluster
+(**_cohesion_**) to the mean distance to other cells in the next closest cluster
+(**_separation_**).
+
+$$
+\frac{cohesion - separation}{\max(cohesion, separation)}
+$$
+
+
+Cells with a large positive width are close to cells in their cluster, while
+cells with a negative silhouette width are closer to cells of another cluster.
+
+```{r, echo=FALSE, out.height='70%', out.width = '70%', fig.align="center"}
+knitr::include_graphics("Images/Silhouette.png")
+```
+
+## Is there a "correct" clustering?
+
+Clustering, like a microscope, is a tool to explore the data. 
+
+We can zoom in and out by changing the resolution of the clustering parameters, and
+experiment with different clustering algorithms to obtain alternative perspectives on the data.
+
+Asking for an unqualified “best” clustering is akin to asking for the best magnification on a microscope.
+
+
+```{r, echo=FALSE, out.height='20%', out.width = '20%', out.extra='style="float:right; padding:10px"'}
+knitr::include_graphics("Images/microscope.jpg", auto_pdf = TRUE)
+```
+
+A more relevant question is “how well do the clusters approximate the cell types or states of interest?”. Do you want:
+
+* resolution of the major cell types? 
+* Resolution of subtypes? 
+* Resolution of different states (e.g., metabolic activity, stress) within those subtypes? 
+
+Explore the data, use your biological knowledge!
+
+<p style="font-size:8pt; font-style:italic">
+Image by Les Chatfield from Brighton, England - Fine rotative table Microscope 5, CC BY 2.0, https://commons.wikimedia.org/w/index.php?curid=32225637
+</p>
+
+## Single Cell RNAseq Analysis Workflow
+
+```{r echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics('Images/workflow2_cluMarkerGenes.png')
+```
+
+## Identifying Cluster Marker Genes
+
+```{r echo=FALSE, out.width= "50%", out.extra='style="float:left; padding:30px"'}
+knitr::include_graphics('Images/tsne_clusters.png')
+```
+
+Our goal is to identify genes that are differently expressed between clusters
+
+Calculate effect sizes that capture differences in:
+
+* mean expression level
+* rank of expression
+* proportion of cells expressing the gene
+
+These are calculated in pairwise cluster comparisons.
+
+
+## Cohen's _d_: mean difference
+
+* Log(fold change) of mean gene expression, standardized by the average standard deviation across the groups.
+* Positive value indicates upregulation in the cluster of interest, and vice-versa.
+
+
+## AUC: rank difference
+
+* "Area Under the Curve" quantifies the ability to distinguish between two gene expression distributions.
+* Measures the likelihood that a random cell in the cluster of interest has a higher expression of the gene than a random cell in the other cluster.
+* Takes no account of the magnitude of gene expression.
+* Ranges from 0 to 1, which can be interpreted as:
+    + 1 = upregulation
+    + 0 = downregulation
+    + 0.5 = no difference
+
+
+## Detection rate difference
+
+* Log(fold change) in the proportion of cells in which the gene is detected (counts > 0) in the cluster of interest versus the proportion of cells in which the gene is detected in the other cluster.
+* Takes no account of the magnitude of gene expression.
+* Positive values indicate that the gene is detected in more cells in the cluster of interest than the other cluster.
+
+
+## `scran::scoreMarkers()` function
+
+For each cluster the function computes the effect size scores between it and every
+other cluster. 
+
+```r
+scoreMarkers(
+  sce, 
+  groups = sce$louvain15      # clusters to compare
+  block = sce$SampleGroup,    # covariates in statistical model
+)
+```
+
+Outputs a list of `DataFrame` with summary statistics for the metrics we just covered (columns named with suffix `cohen`, `AUC` and `detected`).
+
+
+## `scran::scoreMarkers()`: summary statistics
+
+* **mean.X** - mean score across all pairwise comparisons.
+* **min.X** - minimum score obtained across all pairwise comparisons. Most stringent statistic: high score indicates  upregulation relative to *all* other clusters. 
+* **median.X** - median score across all pairwise comparisons. More robust to outliers than the mean. 
+* **max.X** - maximum score obtained across all pairwise comparisons. The least stringent summary statistic: a high score only indicates that the gene is upregulated relative to *at least one* other cluster.
+* **rank.X** - minimum ranking ("min-rank") of that gene's score across all clusters. A rank of 1 indicates that gene had the highest score in at least one of the pairwise comparisons.
+
+
+## So, what's really important? 
+
+* Understand what are we trying to compare with the different scores:
+    + difference in mean expression
+    + probability of being highly/lowly expressed
+    + difference in probability of being expressed
+
+* Strictly speaking, identifying genes differentially expressed between clusters is statistically flawed, since the clusters were themselves defined based on the gene expression data itself. Validation is crucial as a follow-up from these analyses.
+
+* Do not use batch-integrated expression data for calculating marker gene scores, instead, **include batch in the statistical model** (the `scoreMarkers()` function has the `block` argument to achieve this).
+
+* Normalization strategy has a big influence on the results in differences in expression between cell and between clusters.
+
+* A lot of what you get might be noise. Take two random set of cells and run DE and you probably with have a few significant genes with most of the commonly used tests.
+
+* It’s important to assess and **validate the results**. Think of the results as
+hypotheses that need independent verification (e.g. microscopy, qPCR)
+
