@@ -72,7 +72,7 @@ We will use the data set generated in the previous session. This contains 7
 samples from the Caron data set. For the purposes of these materials, in the
 interests of time, each sample has been downsampled to only contain 500 cells.
 
-```{r load_data}
+```{r load_data} 
 sce <- readRDS("R_objects/Caron_batch_corrected.500.rds")
 ```
 
@@ -411,9 +411,6 @@ plotReducedDim(sce,
                text_by = "leiden20")
 ```
 
-</details>
-:::
-
 # Assessing cluster behaviour
 
 A variety of metrics are available to aid us in assessing the behaviour of a 
@@ -466,7 +463,10 @@ plotSilBeeswarm <- function(silDat){
         ggbeeswarm::geom_quasirandom(method="smiley", alpha=0.6) +
         theme_bw()
   
-  plt <- scater:::.resolve_plot_colours(plt, silTab$closestCluster, "closestCluster")
+  plt <- scater:::.resolve_plot_colours(plt, 
+                                        silTab$closestCluster, 
+                                        "closestCluster", 
+                                        colour=TRUE)
   plt
 }
 
@@ -597,20 +597,7 @@ wp2 + wp3 + wp4
 
 
 Largely, this reflects what we saw from the silhouette widths, but also reveals
-some additional inter-connectedness between other clusters. We can also
-visualise this as network graph where nodes are clusters and the edge weights
-are the modularity.
-
-```{r plot_modularity_network}
-cluster.gr <- igraph::graph_from_adjacency_matrix(log2(ratio+1),
-                                                  mode="upper", 
-                                                  weighted=TRUE, diag=FALSE)
-
-set.seed(11001010)
-plot(cluster.gr, 
-     edge.width=igraph::E(cluster.gr)$weight*5,
-     layout=igraph::layout_with_lgl)
-```
+some additional inter-connectedness between other clusters. 
 
 ## Comparing two sets of clusters
 
@@ -738,10 +725,10 @@ to switch to a different clustering, you'd simply need to change the contents of
 the "label" column. This also makes the code easily re-usable for different
 analyses.
 
-For now we will use the Leiden k=25 clustering.
+For now we will use the walktrap k=15 clustering.
 
 ```{r set_labels}
-colLabels(sce) <- sce$k.25_cluster.fun.leiden
+colLabels(sce) <- sce$walktrap15
 ```
 
 
@@ -757,7 +744,7 @@ plotReducedDim(sce,
                dimred = "TSNE_corrected",
                colour_by = "label", 
                text_by = "label") +
-  ggtitle("Leiden k=25 clusters")
+  ggtitle("Walktrap k=15 clusters")
 ```
 
 Having identified clusters, we now display the level of expression of cell type
@@ -829,6 +816,6 @@ saveRDS(sce, file="results/Caron_clustering_material.rds")
 
 <details>
 ```{r session_info, purl=FALSE}
-sessionInfo()
+devtools::session_info()
 ```
 </details>
