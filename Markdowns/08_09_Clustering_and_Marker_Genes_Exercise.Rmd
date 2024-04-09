@@ -1,0 +1,179 @@
+---
+title: "Introduction to single-cell RNA-seq analysis"
+author: "Ashley Sawle"
+date: "April 2024"
+subtitle: "Clustering and Marker Genes Exercise"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 2
+---
+
+
+```{r knitr_options, echo=FALSE, results="hide", message=FALSE}
+require(knitr)
+opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE, cache=FALSE)
+```
+
+# Preamble
+
+During the live session we clustered cells from 7 of the Caron dataset samples,
+but only using 500 cells per sample. We used the Walktrap algorithm with a small
+number of different values for *k*. In this exercise you will run the clustering
+again on these samples, but this time using all the cells. Additionally, you
+will run a larger range of clusterings using `clusterSweep`.
+
+Once you have the clustering results you can assess them using the various
+metrics described in the main course materials and an additional metric:
+"Within-cluster sum of squares". You can then select a few clusterings for
+further investigation by plotting them on a TSNE and comparing them to the
+expression of known cell marker genes.
+
+Finally you will select one clustering that you think best represents the
+biology and identify marker genes that drive the separation between the
+clusters.
+
+For this exercise the OSCA books 
+["Basic"](http://bioconductor.org/books/release/OSCA.basic/clustering.html#clustering-graph)
+and
+["Advanced"](http://bioconductor.org/books/3.15/OSCA.advanced/clustering-redux.html)
+chapters on clustering will be extremely useful.
+
+First `rsync` the **Course_Materials** directory into your working directory using:
+
+```{bash eval=FALSE}
+rsync -vrptg /scratcha/bioinformatics/Course_Materials .
+```
+
+
+# 1. Run `clusterSweep` to generate a range of different clustering
+
+In the **scripts** directory you will find a batch script called
+*ClusterSweep.R*. You will need to modify this script before running. The 
+sections you need to modify/add code are marked **<<YOUR_CODE_HERE>>**. You can
+do the modifications in RStudio if you wish, but will need to submit the script
+from the command line.
+
+This batch script uses `Rscript` rather than `bash` meaning we can just write
+R code and send it directly to the cluster. To achieve this the first line is:
+
+```
+#!/usr/bin/env Rscript
+```
+
+rather than
+
+```
+#!/bin/bash
+```
+
+First, on line 18, you will need to set the working directory to your
+**Course_Materials** directory.
+
+The script will load the data set - 7 Caron samples that have been QC'd, 
+filtered, normalized and batch corrected - from the RDS file 
+*Caron_batch_corrected.all_cells.rds*.
+
+You should then add code to run `clusterSweep` on line 25. I suggest using
+Leiden, Louvain, and one other algorithm. You can find the other available
+algorithms in the OSCA book basic chapter about clustering under the section
+[Adjusting the
+parameters](https://bioconductor.org/books/3.18/OSCA.basic/clustering.html#adjusting-the-parameters).
+You should also test a range of different values of *k*. `clusterSweep` will run
+all possible combinations.
+
+To run the *ClusterSweep.R* using the same R as we are using in the RStudio server
+we need to call the script using a second bash script which runs the Singularity
+image that contains the RStudio server. This script is called
+*RunClusterSweepRscript.sh*. You don't need to change anything in the script, it
+simply starts the Singularity image and runs the RScript using it.
+
+Once `clusterSweep` has run, the script will write an RDS object called
+*Robjects/clusterSweep.out.rds* containing the output of `clusterSweep`. It will
+also add all the resulting clusters to the SCE object and write the SCE object
+to an RDS object called *Robjects/clusterSweep.sce.rds*.
+
+We also want to generate a data.frame containing the cluster behaviour metrics.
+The script already contains the code for adding the numbers of clusters and the
+mean silhouette width - as demonstrated in the live session. At line 48 you
+should also add some code to generate the sum of the Within-cluster Mean Sum of
+Squares - you can find out about this metric in the OSCA book's "Advanced"
+clustering chapter in section 2.5.4 of 
+[Quantifying clustering behavior](http://bioconductor.org/books/release/OSCA.advanced/clustering-redux.html#quantifying-clustering-behavior)
+and how to apply it to `clusterSweep` results under the [Clustering parameter
+sweeps
+section](http://bioconductor.org/books/release/OSCA.advanced/clustering-redux.html#clustering-parameter-sweeps).
+
+Finally, the script will write out these metrics to a tab separated table called 
+*Robjects/clusterSweep.metrics_df.tsv*.
+
+Once you have modified the code in the script you can submit this to the cluster
+from the command line. To run the scripts just use the following command from
+within the **Course_Materials** directory:
+
+```
+sbatch scripts/RunClusterSweepRscript.sh
+```
+
+When the script has run, check the error log file to make sure that the script
+ran through without error and check that all of the output files have been 
+generated. You should have three new files:
+
+* *R_objects/clusterSweep.out.rds*    
+* *R_objects/clusterSweep.metrics_df.tsv*    
+* *R_objects/clusterSweep.sce.rds*    
+
+# 2. Assess the clusterings
+
+You are now going to assess the clusterings and select one to proceed with for
+the downstream analyses. You will do this in R and this is a good time to start
+to use R markdowns instead of R scripts. If you are not familiar with R 
+markdowns, they allow us to combine plain text with chunks of R code, in this
+way we can write a report that can be rendered to html or pdf. One of the main
+advantages here is that any plots or tables generated are displayed in-line with
+the code in RStudio, which is much more convenient than plotting to the "Plots"
+window or writing them to a file. In the scripts directory there is a file 
+*Clustering_and_Marker_Genes.Rmd*. It already contains a brief introduction, 
+which you can modify to record your `clusterSweep` parameters, and couple of 
+chunks of R code to get you started.
+
+First load the metrics data.frame generated by the script and use this to assess
+the behaviour of the different clusterings. Based on this select a few that you
+think might be worth further investgation. 
+
+Plot each clustering on the TSNE or UMAP plots to get an initial impression, you
+may at this stage want to narrow down the number of clusterings you are
+interested or go back and pick some different ones.
+
+Use per-cell silhouette scores, modularity, and within-cluster mean sum of
+squares (or any other methods in the OSCA book you wish to try) to assess the
+cluster behaviour and perhaps plot some of the immune cell marker genes to see
+how well these compare to your clusters.
+
+Suitable markers might include:
+
+- _HBA1_ and _HBA2_ - expressed in red blood cells (erythrocytes)
+- _CST3_ - specific to monocytes
+- _CD3E_ and _CD3D_ - specific to T cells
+- _NKG7_ - specific to natural killer (NK) T cells
+- _CD79A_ and _CD24_ - specific to B cells
+- _MS4A1_ (CD20) - a clinically-important antigen used as a target to treat B cell-related diseases, such as leukemia. Cells with this antigen are referred to as CD20+ B cells.
+
+Finally, choose one clustering to use for marker gene identification.
+
+# 3. Marker gene selection
+
+Run marker gene selection on your final clustering as described in the materials.
+You may additionally want to refer the OSCA book for further information.
+
+Q. Can you identify the cell population or populations contained in the group of
+cells circled in the figure below based on the marker genes for the relevant
+cluster or clusters?
+
+```{r, echo=FALSE, out.width='60%', fig.align='center'}
+knitr::include_graphics("Images/Clustering_Exercise_UMAP_highlight.png")
+```
+
+
+
+
