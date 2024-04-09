@@ -1,3 +1,7 @@
 ._.*
 *sif
 xScrap
+.DS_Store
+.DS_Store?
+*_files/
+*_cache/
