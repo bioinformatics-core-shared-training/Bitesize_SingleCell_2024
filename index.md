@@ -114,7 +114,7 @@ It is assumed you will try the exercises between the two sessions. At the clinic
 ### Week 6
 
 * Clustering and Cluster Marker genes - Ashley Sawle  
-  + [Slides](Slides/08_09_Clustering_and_Marker_Genes.html)  
+  + [Slides](Slides/08_09_ClusteringSlides.html)  
   + [Clustering Demonstration](Markdowns/08_Clustering.html)  
   + [Cluster Marker Gene Selection Demonstration](Markdowns/09_Cluster_Marker_Genes.html)  
 
