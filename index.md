@@ -111,20 +111,25 @@ It is assumed you will try the exercises between the two sessions. At the clinic
   + [Practical/Exercise](Markdowns/07_Dataset_Integration.html)
   + [Recording](https://crukci-my.sharepoint.com/:v:/g/personal/kamal_kishore_cruk_cam_ac_uk/EXlMYN6w5uVOpzHjCLV_Zu0BIFFYXah2XgdmZEcFkZdgxg?e=Pwb8WP&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D)
     
-<!--
 ### Week 6
 
 * Clustering and Cluster Marker genes - Ashley Sawle  
   + [Slides](Slides/08_09_Clustering_and_Marker_Genes.html)  
-  + [Clustering Materials](Markdowns/08_Clustering_Materials.nb.html)  
-  + [Cluster Marker Gene Selection Materials](Markdowns/09_ClusterMarkerGenes.nb.html)  
+  + [Clustering Demonstration](Markdowns/08_Clustering.html)  
+  + [Cluster Marker Gene Selection Demonstration](Markdowns/09_Cluster_Marker_Genes.html)  
+
+<!--
   + [Recording](https://crukci-my.sharepoint.com/:v:/g/personal/ashley_sawle_cruk_cam_ac_uk/EbOuS-MxoEFHp7-0bZoulgEBfsFT9kJDzVKx4Etnotrwxw?e=MnvBp9)
 
   + [Clustering and Marker Gene Selection Exercise](Markdowns/08_09_Clustering_and_Marker_Genes_Exercise.html)  
   + [ClusterSweep batch script solution](scripts/ClusterSweep.Solution.R)  
   + [Clustering and Marker Gene Selection possible solution](Markdowns/08_Clustering_Exercise.Solutions.html)  
+  + [Clustering - labelling cell types](Markdowns/..........)
   + [Recording](https://crukci-my.sharepoint.com/:v:/g/personal/ashley_sawle_cruk_cam_ac_uk/EWqzcQR9fydCtuqOdhrfFjQBiBk6-7Dm5XT6XpNLmFRrPA?e=oUkwca)
+--> 
 
+
+<!--
 ### Week 7
 
 * Differential Expression and Abundance - Abbi Edwards
