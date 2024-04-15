@@ -131,19 +131,18 @@ It is assumed you will try the exercises between the two sessions. At the clinic
 --> 
 
 
-<!--
+
 ### Week 7
 
 * Differential Expression and Abundance - Abbi Edwards
-  + [Slides](Slides/10_MultiSplCompSlides.html)
-  + [Demo](Markdowns/10_MultiSplComp.html)
-  + [Recording](https://crukci-my.sharepoint.com/:v:/g/personal/ashley_sawle_cruk_cam_ac_uk/EZqnSAU9l-pLuJREdqAVGFcBirwfR2rvTcauB4VrbNMpOg?e=dNlOCK)
-  + [Bulk RNASeq Analysis Course materials](https://bioinformatics-core-shared-training.github.io/Bulk_RNAseq_Course_Apr22/)
-  + [Recording of clinic](https://crukci-my.sharepoint.com/:v:/g/personal/ashley_sawle_cruk_cam_ac_uk/EbQNBtxgUP9AvBAGUC8WSrQBB67vNcuxJtTyAt9sGoPfWA?e=65hLg4)
+  + [Slides](Slides/10_DifferentialExpressionAndAbundance.pdf)
+  + [Demo - Expression](Markdowns/10_Differential_Expression.html)
+  + [Demo - Abundance](Markdowns/11_Differential_Abundance.html)
+
   
   
   
--->
+
 ## Additional Resources
 
 * [Bioconductor for relevant R packages](https://bioconductor.org/)
