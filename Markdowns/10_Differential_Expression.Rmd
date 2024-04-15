@@ -1,6 +1,6 @@
 ---
 title: "Introduction to single-cell RNA-seq analysis"
-date: "Sept 2022"
+date: "April 2024"
 subtitle: Differential Expression
 output:
   html_document:
@@ -13,7 +13,7 @@ output:
 
 ```{r setup, echo=FALSE, message=FALSE, warning=FALSE, purl=FALSE}
 knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE, cache=TRUE)
-knitr::opts_knit$set(root.dir = "../course_files")
+#knitr::opts_knit$set(root.dir = "../course_files")
 set.seed(123)
 ```
 
@@ -299,8 +299,7 @@ In this case, we can see that the gene seems differentially expressed not only o
 
 :::exercise
 
-See the accompanying worksheet for this session, which includes the code below
-for the exercise. We want to achieve the following:
+We want to achieve the following:
 
 - Rerun the differential expression analysis using the PRE-T and HHD samples.
 - Determine which cluster has the most DEGs.
