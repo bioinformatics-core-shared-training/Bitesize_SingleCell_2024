@@ -16,6 +16,8 @@ dependencies:
   - r-robustbase
   - r-seurat
   - r-tidyverse
+  - r-ggplotify
+  - r-clustree
   - bioconductor-annotationhub
   - bioconductor-batchelor
   - bioconductor-biocparallel
