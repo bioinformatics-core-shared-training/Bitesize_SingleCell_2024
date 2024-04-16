@@ -11,6 +11,7 @@ library(scater)
 library(scran)
 library(bluster)
 library(BiocParallel)
+library(tidyverse)
 bpp <- BiocParallel::MulticoreParam(16)
 
 # set the working directory to the Course_Materials directory

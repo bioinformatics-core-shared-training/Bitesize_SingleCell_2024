@@ -119,16 +119,13 @@ It is assumed you will try the exercises between the two sessions. At the clinic
   + [Cluster Marker Gene Selection Demonstration](Markdowns/09_Cluster_Marker_Genes.html)  
 
   + [Clustering and Marker Gene Selection Exercise](Markdowns/08_09_Clustering_and_Marker_Genes_Exercise.html)  
+  + [ClusterSweep batch script solution](scripts/ClusterSweep.Solution.R)  
+  + [Clustering and Marker Gene Selection possible solution](Markdowns/08_Clustering_Exercise.Solutions.html)  
+  + [Recording](https://crukci-my.sharepoint.com/:v:/g/personal/ashley_sawle_cruk_cam_ac_uk/EXCu4WcYV1pOsIBQKRSXPlwBcO_XOxKXG8K51S4T5whKqA)
 
   + [Clustering - labelling cell types](Markdowns/09_Cluster_Marker_Genes_Labelling_Celltypes.html)
   
   
-<!--
-
-  + [ClusterSweep batch script solution](scripts/ClusterSweep.Solution.R)  
-  + [Clustering and Marker Gene Selection possible solution](Markdowns/08_Clustering_Exercise.Solutions.html)  
-  + [Recording](https://crukci-my.sharepoint.com/:v:/g/personal/ashley_sawle_cruk_cam_ac_uk/EWqzcQR9fydCtuqOdhrfFjQBiBk6-7Dm5XT6XpNLmFRrPA?e=oUkwca)
---> 
 
 
 <!--
