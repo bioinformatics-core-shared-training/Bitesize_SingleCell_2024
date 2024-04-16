@@ -389,7 +389,7 @@ You can consult the [package's main vignette](https://bioconductor.org/packages/
 We want to achieve the following:
 
 - Rerun the DA analysis this time changing the 'k' and 'd' parameters, does this alter the results?
-- Which cell type cluster has the most changing neighbourhoods?
+- Which cell type cluster has the most changing neighbourhoods? Does this make sense from what we know of the biology?
 
 ## Session information
 
