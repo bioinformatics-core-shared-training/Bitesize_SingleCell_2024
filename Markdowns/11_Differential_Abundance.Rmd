@@ -1,6 +1,6 @@
 ---
 title: "Introduction to single-cell RNA-seq analysis"
-date: "Sept 2022"
+date: "April 2024"
 subtitle: Differential Abundance
 output:
   html_document:
@@ -13,7 +13,7 @@ output:
 
 ```{r setup, echo=FALSE, message=FALSE, warning=FALSE, purl=FALSE}
 knitr::opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE, cache=TRUE, cache.lazy = FALSE)
-knitr::opts_knit$set(root.dir = "../course_files")
+#knitr::opts_knit$set(root.dir = "../course_files")
 set.seed(123)
 ```
 
@@ -377,6 +377,19 @@ There are further downstream analysis possible to identify genes that differenti
 This is similar in spirit to the marker gene analysis we did earlier, but based on the neighbourhood graph constructed by Milo. 
 You can consult the [package's main vignette](https://bioconductor.org/packages/release/bioc/vignettes/miloR/inst/doc/milo_gastrulation.html#5_Finding_markers_of_DA_populations) to see examples of these downstream analysis. 
 
+## Exercise
+
+```{r, echo=FALSE}
+
+# Exercise -----
+```
+
+:::exercise
+
+We want to achieve the following:
+
+- Rerun the DA analysis this time changing the 'k' and 'd' parameters, does this alter the results?
+- Which cell type cluster has the most changing neighbourhoods?
 
 ## Session information
 
