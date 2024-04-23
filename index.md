@@ -4,6 +4,9 @@
 
 ![](Images/CRUK_Cambridge_Institute.png)
 
+## Github link
+[Repo](https://github.com/bioinformatics-core-shared-training/Bitesize_SingleCell_2024)
+
 ## Instructors
 
 * Abbi Edwards - Bioinformatics Core, Cancer Research UK Cambridge Institute
@@ -135,7 +138,7 @@ It is assumed you will try the exercises between the two sessions. At the clinic
   + [Slides](Slides/10_DifferentialExpressionAndAbundance.pdf)
   + [Demo - Expression](Markdowns/10_Differential_Expression.html)
   + [Demo - Abundance](Markdowns/11_Differential_Abundance.html)
-
+  + [Extra old version with extra at the end](Markdowns/10_Differencial_Exp_Ab.html)
   
   
   
